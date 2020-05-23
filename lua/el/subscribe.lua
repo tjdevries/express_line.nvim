@@ -18,6 +18,8 @@ subscribe.autocmd = function(identifier, name, pattern, callback)
   ))
 end
 
+subscribe._process_callbacks
+
 subscribe.option_set = function()
 end
 

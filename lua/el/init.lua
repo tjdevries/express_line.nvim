@@ -1,10 +1,13 @@
 -- TODO: Comment out later when stablized
 package.loaded['el'] = nil
 package.loaded['el.builtin'] = nil
+package.loaded['el.sections'] = nil
 package.loaded['luvjob'] = nil
 
 local luvjob = require('luvjob')
+
 local builtin = require('el.builtin')
+local sections = require('el.sections')
 
 local el = {}
 
@@ -18,31 +21,48 @@ local el = {}
 -- Autocmd subscriber (subscribe to list of autocmds, one-shot update something, displayed in statusline)
 -- on_exit provider for jobstart to set the value when you're done.
 
+-- builtin.file,
+-- builtin.modified,
+-- builtin.filetype,
+-- builtin.filetype_list,
+-- el.helper.buf_var('el_tester'),
+-- el.helper.win_var('el_win_tester'),
+-- el.helper.async_win_setter(
+--   win_id,
+--   'el_current_time',
+--   function() return vim.fn.localtime() end,
+--   5000
+-- ),
+-- el.helper.async_buf_setter(
+--   win_id,
+--   'el_git_status',
+--   el.extensions.git_checker,
+--   1000
+-- ),
+-- }
 
-el.status_lines = setmetatable({}, {
+-- Default status line setter.
+local status_line_setter = function(win_id)
+  return {
+    el.extensions.mode,
+    sections.split,
+    'This is in the center',
+    sections.split,
+    builtin.modified,
+    builtin.filetype,
+  }
+end
+
+el.set_statusline_generator = function(item_generator)
+  vim.validate { item_generator = { item_generator, 'f' } }
+
+  status_line_setter = item_generator
+end
+
+el._window_status_lines = setmetatable({}, {
   __index = function(self, win_id)
     -- Gather up functions to use when evaluating statusline
-    local items = {
-      el.extensions.mode,
-      builtin.file,
-      builtin.modified,
-      builtin.filetype,
-      builtin.filetype_list,
-      el.helper.buf_var('el_tester'),
-      el.helper.win_var('el_win_tester'),
-      el.helper.async_win_setter(
-        win_id,
-        'el_current_time',
-        function() return vim.fn.localtime() end,
-        5000
-      ),
-      el.helper.async_buf_setter(
-        win_id,
-        'el_git_status',
-        el.extensions.git_checker,
-        1000
-      ),
-    }
+    local items = status_line_setter(win_id)
 
     self[win_id] = function()
       -- Gather up buffer info:
@@ -390,7 +410,7 @@ el.set_statusline = function(win_id, items)
 end
 
 el.run = function(win_id)
-  return el.status_lines[win_id]()
+  return el._window_status_lines[win_id]()
 end
 
 
