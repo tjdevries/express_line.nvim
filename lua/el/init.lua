@@ -1,8 +1,12 @@
+-- TODO: Comment out later when stablized
+package.loaded['el'] = nil
+package.loaded['el.builtin'] = nil
 package.loaded['luvjob'] = nil
 
 local luvjob = require('luvjob')
+local builtin = require('el.builtin')
 
-el = {}
+local el = {}
 
 -- Types of functions:
 -- 1. Just returns a string (built-in statusline stuff. Can't beat it)
@@ -14,40 +18,18 @@ el = {}
 -- Autocmd subscriber (subscribe to list of autocmds, one-shot update something, displayed in statusline)
 -- on_exit provider for jobstart to set the value when you're done.
 
-local long_coro = function()
-  return coroutine.create(function()
-    coroutine.yield()
-    coroutine.yield()
-    coroutine.yield()
-    coroutine.yield()
-    coroutine.yield()
-    coroutine.yield()
-    coroutine.yield()
-
-    return '<a>'
-  end)
-end
-
-local short_coro = function()
-  return coroutine.create(function()
-    coroutine.yield()
-    coroutine.yield()
-
-    return '<b>'
-  end)
-end
 
 el.status_lines = setmetatable({}, {
   __index = function(self, win_id)
     -- Gather up functions to use when evaluating statusline
     local items = {
       el.extensions.mode,
-      el.builtin.file,
-      el.builtin.modified,
+      builtin.file,
+      builtin.modified,
+      builtin.filetype,
+      builtin.filetype_list,
       el.helper.buf_var('el_tester'),
       el.helper.win_var('el_win_tester'),
-      short_coro,
-      long_coro,
       el.helper.async_win_setter(
         win_id,
         'el_current_time',
@@ -143,10 +125,6 @@ end
 el.new_extension = function(global)
 end
 
-el.builtin = {}
-
-el.builtin.file = '%f'
-el.builtin.modified = '%m'
 
 el.extensions = {}
 
@@ -445,7 +423,7 @@ end
 el.option_set_subscribe("filetype", function(opts) print(vim.inspect(opts)) end)
 
 if false then
-  vim.wo.statusline = string.format('%%!v:lua.el.run(%s)', vim.fn.win_getid())
+  vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid())
 end
 -- vim.cmd[[augroup ExpressLineAu]]
 -- vim.cmd[[  au!]]
