@@ -27,7 +27,11 @@ local meta = {}
 local buf_lookups = {
   filetype = function(buffer)
     return vim.api.nvim_buf_get_option(buffer.bufnr, 'filetype')
-  end
+  end,
+
+  name = function(buffer)
+    return vim.api.nvim_buf_get_name(buffer.bufnr)
+  end,
 }
 
 
@@ -50,6 +54,10 @@ local buf_mt = {
 
 
 function Buffer:new(bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_buf_get_number(0)
+  end
+
   return setmetatable({
       bufnr = bufnr,
     },
@@ -58,5 +66,31 @@ function Buffer:new(bufnr)
 end
 
 meta.Buffer = Buffer
+
+meta.Window = {}
+
+local win_looksup = {
+}
+
+local window_mt = {
+  __index = function(t, k)
+    local result = nil
+
+    if meta.Window[k] ~= nil then
+      result = meta.Window[k]
+    elseif win_looksup[k] ~= nil then
+      result = win_looksup[k](t)
+    end
+
+    t[k] = result
+    return t[k]
+  end
+}
+
+function meta.Window:new(win_id)
+  return setmetatable({
+    win_id = win_id,
+  }, window_mt)
+end
 
 return meta

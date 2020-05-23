@@ -2,12 +2,14 @@
 package.loaded['el'] = nil
 package.loaded['el.builtin'] = nil
 package.loaded['el.sections'] = nil
+package.loaded['el.meta'] = nil
 package.loaded['luvjob'] = nil
 
 local luvjob = require('luvjob')
 
 local builtin = require('el.builtin')
 local sections = require('el.sections')
+local meta = require('el.meta')
 
 local el = {}
 
@@ -45,6 +47,7 @@ local el = {}
 local status_line_setter = function(win_id)
   return {
     el.extensions.mode,
+    el.extensions.display_win,
     sections.split,
     'This is in the center',
     sections.split,
@@ -64,9 +67,11 @@ el._window_status_lines = setmetatable({}, {
     -- Gather up functions to use when evaluating statusline
     local items = status_line_setter(win_id)
 
+    local window = meta.Window:new(win_id)
+
     self[win_id] = function()
       -- Gather up buffer info:
-      local bufnr = vim.api.nvim_win_get_buf(win_id)
+      local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
 
       -- Start up variable referencers
       -- Start up coroutine dudes
@@ -80,7 +85,7 @@ el._window_status_lines = setmetatable({}, {
         if type(v) == 'string' then
           statusline[k] = v
         elseif type(v) == 'function' then
-          local result = v(win_id, bufnr)
+          local result = v(window, buffer)
 
           if type(result) == 'thread' then
             table.insert(waiting, { index = k, thread = result })
@@ -104,7 +109,7 @@ el._window_status_lines = setmetatable({}, {
 
           if wait_val ~= nil then
             local index, thread = wait_val.index, wait_val.thread
-            local _, res = coroutine.resume(thread, win_id, bufnr)
+            local _, res = coroutine.resume(thread, window, buffer)
 
             if coroutine.status(thread) == 'dead' then
               statusline[index] = res
@@ -148,8 +153,8 @@ end
 
 el.extensions = {}
 
-el.extensions.mode = function(win_id, bufnr)
-  local filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+el.extensions.mode = function(_, buffer)
+  local filetype = buffer.filetype
 
   return el.blocks.highlight(
     (filetype == 'lua' and 'Function')
@@ -159,12 +164,12 @@ el.extensions.mode = function(win_id, bufnr)
   )
 end
 
-el.extensions.display_win = function(win_id, _)
-  return string.format(" Win ID: %s", win_id)
+el.extensions.display_win = function(window, _)
+  return string.format(" Win ID: %s", window.win_id)
 end
 
-el.extensions.git_status = function(win_id, bufnr)
-  local filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+el.extensions.git_status = function(_, buffer)
+  local filetype = buffer.filetype
 
   if filetype ~= 'lua' and filetype ~= 'python' then
     return
@@ -173,15 +178,15 @@ el.extensions.git_status = function(win_id, bufnr)
   local j = luvjob:new({
     command = "git",
     args = {"diff", "--shortstat"},
-    cwd = vim.fn.fnamemodify(vim.fn.nvim_buf_get_name(bufnr), ":h"),
+    cwd = vim.fn.fnamemodify(buffer.name, ":h"),
   })
 
   return vim.trim(j:start():co_wait()._raw_output)
 end
 
 
-el.extensions.git_checker = function(win_id, bufnr)
-  local filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+el.extensions.git_checker = function(_, buffer)
+  local filetype = buffer.filetype
 
   if filetype ~= 'lua' and filetype ~= 'python' then
     return
@@ -190,14 +195,14 @@ el.extensions.git_checker = function(win_id, bufnr)
   local j = luvjob:new({
     command = "git",
     args = {"diff", "--shortstat"},
-    cwd = vim.fn.fnamemodify(vim.fn.nvim_buf_get_name(bufnr), ":h"),
+    cwd = vim.fn.fnamemodify(buffer.name, ":h"),
   })
 
   return vim.trim(j:start():wait()._raw_output)
 end
 
 el.extensions.sleeper = function(wait_time)
-  return function(win_id, bufnr)
+  return function(_, _)
     local j = luvjob:new({
       command = "sleep",
       args = {wait_time},
@@ -211,8 +216,10 @@ end
 el.helper = {}
 
 el.helper.buf_var = function(var_name)
-  return function(_, bufnr)
-    local ok, result = pcall(function() return vim.api.nvim_buf_get_var(bufnr, var_name) end)
+  return function(_, buffer)
+    local ok, result = pcall(function()
+      return vim.api.nvim_buf_get_var(buffer.bufnr, var_name)
+    end)
 
     if ok then
       return result
@@ -221,8 +228,10 @@ el.helper.buf_var = function(var_name)
 end
 
 el.helper.win_var = function(var_name)
-  return function(win_id)
-    local ok, result = pcall(function() return vim.api.nvim_win_get_var(win_id, var_name) end)
+  return function(window)
+    local ok, result = pcall(function()
+      return vim.api.nvim_win_get_var(window.win_id, var_name)
+    end)
 
     if ok then
       return result
@@ -245,12 +254,12 @@ end
 local async_setter = function(association)
   local setter_func
   if association == 'win' then
-    setter_func = function(win_id, _, var_name, result)
-      return vim.api.nvim_win_set_var(win_id, var_name, result)
+    setter_func = function(window, _, var_name, result)
+      return vim.api.nvim_win_set_var(window.win_id, var_name, result)
     end
   elseif association == 'buf' then
-    setter_func = function(_, bufnr, var_name, result)
-      return vim.api.nvim_buf_set_var(bufnr, var_name, result)
+    setter_func = function(_, buffer, var_name, result)
+      return vim.api.nvim_buf_set_var(buffer.bufnr, var_name, result)
     end
   else
     error(string.format("Unsupported associated: ", association))
@@ -283,12 +292,14 @@ local async_setter = function(association)
     _ElRunningTimers[timer_index] = { started_at = vim.fn.strftime("%c"), timer = timer}
 
     timer:start(0, refresh_rate, vim.schedule_wrap(function()
-      local bufnr = vim.api.nvim_win_get_buf(win_id)
+      -- TODO: Find some way to share these w/ the rest of the calls.
+      local window = meta.Window:new(win_id)
+      local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
 
-      local ok, result = pcall(f, win_id, bufnr)
+      local ok, result = pcall(f, window, buffer)
 
       if ok then
-        setter_func(win_id, bufnr, var_name, result)
+        setter_func(window, buffer, var_name, result)
       else
         timer:stop()
         timer:close()
@@ -303,111 +314,6 @@ end
 
 el.helper.async_win_setter = async_setter("win")
 el.helper.async_buf_setter = async_setter("buf")
-
-el.helper.cacher = function(win_id, var, f, refresh_rate)
-  local timer = nil
-
-  return function()
-    if timer == nil then
-      timer = vim.loop.new_timer()
-      timer:start(1, refresh_rate, vim.schedule_wrap(function()
-        local ok, result = pcall(f)
-
-        if not ok then
-          timer:stop()
-          timer:close()
-
-          -- TODO: Log errors
-          vim.api.nvim_win_set_var(win_id, '_el_error', result)
-
-          return
-        end
-
-
-        local current_cache = vim.api.nvim_win_get_var(win_id, '_el_cache')
-        current_cache[var] = result
-
-        vim.api.nvim_win_set_var(win_id, '_el_cache', current_cache)
-      end))
-    end
-
-    return vim.w._el_cache[var]
-  end
-end
-
-el.set_statusline = function(win_id, items)
-  local bufnr = vim.api.nvim_win_get_buf(win_id)
-
-  local items_remaining = {}
-  for _, v in ipairs(items) do
-    if vim.is_callable(v) then
-      table.insert(items_remaining, coroutine.create(v))
-    else
-      table.insert(items_remaining, v)
-    end
-  end
-
-  local completed = 0
-  local remaining = table.getn(items_remaining)
-
-  local statusline = {}
-  table.foreach(
-    items_remaining,
-    function(k, v)
-      if type(v) == 'thread' then
-        table.insert(statusline, '')
-      else
-        table.insert(statusline, v)
-        items_remaining[k] = nil
-
-        completed = completed + 1
-      end
-    end
-  )
-
-  vim.fn.nvim_win_set_var(win_id, 'remaining', remaining)
-
-  local start = os.time()
-  while start + 2 > os.time() do
-    if remaining == completed then
-      break
-    end
-
-    for i = 1, remaining do
-      local v = items_remaining[i]
-
-      if v ~= nil then
-        if coroutine.status(v) ~= 'dead' then
-          local status, res = coroutine.resume(v, win_id, bufnr)
-
-          if res ~= nil then
-            statusline[i] = statusline[i] .. res
-          end
-
-          if coroutine.status(v) == 'dead' then
-            completed = completed + 1
-
-            -- Remove
-            items_remaining[i] = nil
-          end
-        end
-      end
-    end
-  end
-
-  vim.fn.nvim_win_set_var(win_id, 'result', statusline)
-
-  local final = {}
-  table.foreach(statusline, function(k, v)
-    if v == nil then
-      return
-    end
-
-    final[k] = v
-  end)
-
-  return table.concat(final, " ")
-end
 
 el.run = function(win_id)
   return el._window_status_lines[win_id]()
