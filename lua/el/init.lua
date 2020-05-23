@@ -4,12 +4,14 @@ package.loaded['el.builtin'] = nil
 package.loaded['el.sections'] = nil
 package.loaded['el.extensions'] = nil
 package.loaded['el.meta'] = nil
+package.loaded['el.helper'] = nil
 package.loaded['luvjob'] = nil
 
 local luvjob = require('luvjob')
 
 local builtin = require('el.builtin')
 local extensions = require('el.extensions')
+local helper = require('el.helper')
 local sections = require('el.sections')
 local meta = require('el.meta')
 
@@ -49,12 +51,28 @@ local el = {}
 local status_line_setter = function(win_id)
   return {
     el.extensions.mode,
-    el.extensions.display_win,
+    sections.left_subsection {
+      highlight = 'Error',
+      items = {
+        el.extensions.display_win,
+      },
+    },
     sections.split,
     'This is in the center',
     sections.split,
-    extensions.git_checker,
-    builtin.modified,
+    helper.async_buf_setter(
+      win_id,
+      'el_git_stat',
+      extensions.git_checker,
+      1000
+    ),
+    sections.collapse_builtin{
+      '[',
+      builtin.modified_list,
+      builtin.help_list,
+      builtin.readonly_list,
+      ']',
+    },
     builtin.filetype,
   }
 end
@@ -68,7 +86,7 @@ end
 el._window_status_lines = setmetatable({}, {
   __index = function(self, win_id)
     -- Gather up functions to use when evaluating statusline
-    local items = status_line_setter(win_id)
+    local items = vim.tbl_flatten(status_line_setter(win_id))
 
     local window = meta.Window:new(win_id)
 
@@ -135,7 +153,7 @@ el._window_status_lines = setmetatable({}, {
         table.insert(final, v)
       end)
 
-      return table.concat(final, " | ")
+      return table.concat(final, "")
     end
 
     return self[win_id]
@@ -201,108 +219,6 @@ el.extensions.sleeper = function(wait_time)
 end
 
 
-el.helper = {}
-
-el.helper.buf_var = function(var_name)
-  return function(_, buffer)
-    local ok, result = pcall(function()
-      return vim.api.nvim_buf_get_var(buffer.bufnr, var_name)
-    end)
-
-    if ok then
-      return result
-    end
-  end
-end
-
-el.helper.win_var = function(var_name)
-  return function(window)
-    local ok, result = pcall(function()
-      return vim.api.nvim_win_get_var(window.win_id, var_name)
-    end)
-
-    if ok then
-      return result
-    end
-  end
-end
-
-
---- { [win_id, buf_id, timer_name] = timer }
-_ElRunningTimers = _ElRunningTimers or {}
-function ClearElTimers()
-  table.foreach(_ElRunningTimers, function(k, v)
-    v.timer:stop()
-    v.timer:close()
-
-    _ElRunningTimers[k] = nil
-  end)
-end
-
-local async_setter = function(association)
-  local setter_func
-  if association == 'win' then
-    setter_func = function(window, _, var_name, result)
-      return vim.api.nvim_win_set_var(window.win_id, var_name, result)
-    end
-  elseif association == 'buf' then
-    setter_func = function(_, buffer, var_name, result)
-      return vim.api.nvim_buf_set_var(buffer.bufnr, var_name, result)
-    end
-  else
-    error(string.format("Unsupported associated: ", association))
-  end
-
-  local helper_func
-  if association == 'win' then
-    helper_func = el.helper.win_var
-  elseif association == 'buf' then
-    helper_func = el.helper.buf_var
-  else
-    error(string.format("Unsupported associated: ", association))
-  end
-
-  return function(win_id, var_name, f, refresh_rate)
-    local timer_index = string.format("%s:%s:%s", association, win_id, var_name)
-    local timer = vim.loop.new_timer()
-
-    -- Clear any existing timers that exist for this.
-    if _ElRunningTimers[timer_index] ~= nil then
-      local existing_timer = _ElRunningTimers[timer_index].timer
-
-      existing_timer:stop()
-      existing_timer:close()
-
-      -- Clear value
-      _ElRunningTimers[timer_index] = nil
-    end
-
-    _ElRunningTimers[timer_index] = { started_at = vim.fn.strftime("%c"), timer = timer}
-
-    timer:start(0, refresh_rate, vim.schedule_wrap(function()
-      -- TODO: Find some way to share these w/ the rest of the calls.
-      local window = meta.Window:new(win_id)
-      local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
-
-      local ok, result = pcall(f, window, buffer)
-
-      if ok then
-        setter_func(window, buffer, var_name, result)
-      else
-        timer:stop()
-        timer:close()
-
-        _ElRunningTimers[timer_index] = nil
-      end
-    end))
-
-    return helper_func(var_name)
-  end
-end
-
-el.helper.async_win_setter = async_setter("win")
-el.helper.async_buf_setter = async_setter("buf")
-
 el.run = function(win_id)
   return el._window_status_lines[win_id]()
 end
@@ -334,15 +250,10 @@ el.option_process = function(name, callback_number)
   return option_callbacks[callback_number](name, opts)
 end
 
-el.option_set_subscribe("filetype", function(opts) print(vim.inspect(opts)) end)
+-- el.option_set_subscribe("filetype", function(opts) print(vim.inspect(opts)) end)
 
 if false then
   vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid())
 end
-
--- vim.cmd[[augroup ExpressLineAu]]
--- vim.cmd[[  au!]]
--- vim.cmd[[  autocmd BufEnter,BufWinEnter * :lua vim.wo.statusline = string.format('%%!v:lua.el.test(%s)', vim.fn.win_getid())]]
--- vim.cmd[[augroup END]]
 
 return el

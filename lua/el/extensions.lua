@@ -7,7 +7,6 @@ local git_insertions = vim.regex([[\(\d\+\)\( insertions\)\@=]])
 local git_deletions = vim.regex([[\(\d\+\)\( deletions\)\@=]])
 
 local parse_shortstat_output = function(s)
-  print(wow)
   local result = {}
 
   local changed = {git_changed:match_str(s)}
