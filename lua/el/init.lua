@@ -2,12 +2,14 @@
 package.loaded['el'] = nil
 package.loaded['el.builtin'] = nil
 package.loaded['el.sections'] = nil
+package.loaded['el.extensions'] = nil
 package.loaded['el.meta'] = nil
 package.loaded['luvjob'] = nil
 
 local luvjob = require('luvjob')
 
 local builtin = require('el.builtin')
+local extensions = require('el.extensions')
 local sections = require('el.sections')
 local meta = require('el.meta')
 
@@ -24,8 +26,7 @@ local el = {}
 -- on_exit provider for jobstart to set the value when you're done.
 
 -- builtin.file,
--- builtin.modified,
--- builtin.filetype,
+-- builtin.modified_tag,
 -- builtin.filetype_list,
 -- el.helper.buf_var('el_tester'),
 -- el.helper.win_var('el_win_tester'),
@@ -43,6 +44,7 @@ local el = {}
 -- ),
 -- }
 
+
 -- Default status line setter.
 local status_line_setter = function(win_id)
   return {
@@ -51,6 +53,7 @@ local status_line_setter = function(win_id)
     sections.split,
     'This is in the center',
     sections.split,
+    extensions.git_checker,
     builtin.modified,
     builtin.filetype,
   }
@@ -185,21 +188,6 @@ el.extensions.git_status = function(_, buffer)
 end
 
 
-el.extensions.git_checker = function(_, buffer)
-  local filetype = buffer.filetype
-
-  if filetype ~= 'lua' and filetype ~= 'python' then
-    return
-  end
-
-  local j = luvjob:new({
-    command = "git",
-    args = {"diff", "--shortstat"},
-    cwd = vim.fn.fnamemodify(buffer.name, ":h"),
-  })
-
-  return vim.trim(j:start():wait()._raw_output)
-end
 
 el.extensions.sleeper = function(wait_time)
   return function(_, _)
@@ -351,6 +339,7 @@ el.option_set_subscribe("filetype", function(opts) print(vim.inspect(opts)) end)
 if false then
   vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid())
 end
+
 -- vim.cmd[[augroup ExpressLineAu]]
 -- vim.cmd[[  au!]]
 -- vim.cmd[[  autocmd BufEnter,BufWinEnter * :lua vim.wo.statusline = string.format('%%!v:lua.el.test(%s)', vim.fn.win_getid())]]
