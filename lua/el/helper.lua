@@ -30,12 +30,25 @@ end
 --- { [win_id, buf_id, timer_name] = timer }
 _ElRunningTimers = _ElRunningTimers or {}
 function helper.__ClearElTimers()
-  table.foreach(_ElRunningTimers, function(k, v)
-    v.timer:stop()
-    v.timer:close()
-
-    _ElRunningTimers[k] = nil
+  table.foreach(_ElRunningTimers, function(k, _)
+    helper.__clear_timer(k)
   end)
+end
+
+function helper.__clear_timer(k)
+  if _ElRunningTimers[k] == nil then
+    return
+  end
+
+  local existing_timer = _ElRunningTimers[k].timer
+
+  pcall(function()
+    existing_timer:stop()
+    existing_timer:close()
+  end)
+
+  -- Clear value
+  _ElRunningTimers[k] = nil
 end
 
 local async_setter = function(association)
@@ -67,20 +80,17 @@ local async_setter = function(association)
 
     -- Clear any existing timers that exist for this.
     if _ElRunningTimers[timer_index] ~= nil then
-      local existing_timer = _ElRunningTimers[timer_index].timer
-
-      pcall(function()
-        existing_timer:stop()
-        existing_timer:close()
-      end)
-
-      -- Clear value
-      _ElRunningTimers[timer_index] = nil
+      helper.__clear_timer(timer_index)
     end
 
     _ElRunningTimers[timer_index] = { started_at = vim.fn.strftime("%c"), timer = timer}
 
     timer:start(0, refresh_rate, vim.schedule_wrap(function()
+      if not vim.api.nvim_win_is_valid(win_id) then
+        helper.__clear_timer(timer_index)
+        return
+      end
+
       -- TODO: Find some way to share these w/ the rest of the calls.
       local window = meta.Window:new(win_id)
       local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
@@ -90,10 +100,7 @@ local async_setter = function(association)
       if ok then
         setter_func(window, buffer, var_name, result)
       else
-        timer:stop()
-        timer:close()
-
-        _ElRunningTimers[timer_index] = nil
+        helper.__clear_timer(timer_index)
       end
     end))
 

@@ -91,6 +91,10 @@ el._window_status_lines = setmetatable({}, {
     local window = meta.Window:new(win_id)
 
     self[win_id] = function()
+      if not vim.fn.nvim_win_is_valid(win_id) then
+        return
+      end
+
       -- Gather up buffer info:
       local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
 
