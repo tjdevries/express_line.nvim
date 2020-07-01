@@ -1,5 +1,6 @@
 local luvjob = require('luvjob')
 
+local log = require('el._log')
 local modes = require('el.data').modes
 
 local extensions = {}
@@ -40,14 +41,14 @@ extensions.git_checker = function(_, buffer)
     return
   end
 
-  if vim.api.nvim_buf_get_option(buffer.bufnr, 'bufhidden')
+  if vim.api.nvim_buf_get_option(buffer.bufnr, 'bufhidden') ~= ""
       or vim.api.nvim_buf_get_option(buffer.bufnr, 'buftype') == 'nofile' then
     return
   end
 
   local j = luvjob:new({
     command = "git",
-    args = {"diff", "--shortstat"},
+    args = {"diff", "--shortstat", buffer.name},
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),
   })
 

@@ -15,6 +15,8 @@ local helper = require('el.helper')
 local sections = require('el.sections')
 local meta = require('el.meta')
 
+local lsp_statusline = require('el.plugins.lsp_status')
+
 local el = {}
 
 -- Types of functions:
@@ -51,12 +53,6 @@ local el = {}
 local status_line_setter = function(win_id)
   return {
     extensions.mode,
-    -- sections.left_subsection {
-    --   highlight = 'Error',
-    --   items = {
-    --     el.extensions.display_win,
-    --   },
-    -- },
     sections.split,
     builtin.file,
     sections.collapse_builtin{
@@ -64,6 +60,8 @@ local status_line_setter = function(win_id)
       builtin.modified_flag
     },
     sections.split,
+    -- lsp_statusline.segment,
+    lsp_statusline.current_function,
     helper.async_buf_setter(
       win_id,
       'el_git_stat',
@@ -218,6 +216,11 @@ end
 
 el.run = function(win_id)
   return el._window_status_lines[win_id]()
+end
+
+el.clear = function(win_id)
+  win_id = vim.api.nvim_win_get_number(win_id)
+  el._window_status_lines[win_id] = nil
 end
 
 

@@ -32,8 +32,11 @@ local buf_lookups = {
   name = function(buffer)
     return vim.api.nvim_buf_get_name(buffer.bufnr)
   end,
-}
 
+  lsp = function(buffer)
+    return not vim.tbl_isempty(vim.tbl_keys(vim.lsp.buf_get_clients(buffer.bufnr)))
+  end
+}
 
 local Buffer = {}
 
@@ -51,7 +54,6 @@ local buf_mt = {
     return t[k]
   end
 }
-
 
 function Buffer:new(bufnr)
   if bufnr == 0 then
