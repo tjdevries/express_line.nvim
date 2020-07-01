@@ -1,5 +1,7 @@
 local luvjob = require('luvjob')
 
+local modes = require('el.data').modes
+
 local extensions = {}
 
 local git_changed = vim.regex([[\(\d\+\)\( file changed\)\@=]])
@@ -38,13 +40,40 @@ extensions.git_checker = function(_, buffer)
     return
   end
 
+  if vim.api.nvim_buf_get_option(buffer.bufnr, 'bufhidden')
+      or vim.api.nvim_buf_get_option(buffer.bufnr, 'buftype') == 'nofile' then
+    return
+  end
+
   local j = luvjob:new({
     command = "git",
     args = {"diff", "--shortstat"},
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),
   })
 
-  return parse_shortstat_output(vim.trim(j:start():wait()._raw_output))
+  local ok, result = pcall(function()
+    return parse_shortstat_output(vim.trim(j:start():wait()._raw_output))
+  end)
+
+  if ok then
+    return result
+  end
+
+  return ''
+end
+
+ExpressLineExtensionsMode = function()
+  local mode = vim.fn.mode()
+
+  local display_name = modes[mode][1]
+
+  return string.format(' [ %s ] ', display_name)
+end
+
+extensions.mode = function(_, buffer)
+  local filetype = buffer.filetype
+
+  return string.format('%%{v:lua.ExpressLineExtensionsMode()}')
 end
 
 return extensions

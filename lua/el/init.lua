@@ -50,15 +50,19 @@ local el = {}
 -- Default status line setter.
 local status_line_setter = function(win_id)
   return {
-    el.extensions.mode,
-    sections.left_subsection {
-      highlight = 'Error',
-      items = {
-        el.extensions.display_win,
-      },
-    },
+    extensions.mode,
+    -- sections.left_subsection {
+    --   highlight = 'Error',
+    --   items = {
+    --     el.extensions.display_win,
+    --   },
+    -- },
     sections.split,
-    'This is in the center',
+    builtin.file,
+    sections.collapse_builtin{
+      ' ',
+      builtin.modified_flag
+    },
     sections.split,
     helper.async_buf_setter(
       win_id,
@@ -66,9 +70,9 @@ local status_line_setter = function(win_id)
       extensions.git_checker,
       1000
     ),
+    '[', builtin.line, ' : ',  builtin.column, ']',
     sections.collapse_builtin{
       '[',
-      builtin.modified_list,
       builtin.help_list,
       builtin.readonly_list,
       ']',
@@ -178,17 +182,6 @@ end
 
 el.extensions = {}
 
-el.extensions.mode = function(_, buffer)
-  local filetype = buffer.filetype
-
-  return el.blocks.highlight(
-    (filetype == 'lua' and 'Function')
-    or (filetype == 'vim' and 'PMenuSel')
-    or 'Error',
-    string.format(' [ %%{mode()} ] ')
-  )
-end
-
 el.extensions.display_win = function(window, _)
   return string.format(" Win ID: %s", window.win_id)
 end
@@ -259,5 +252,6 @@ end
 if false then
   vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid())
 end
+
 
 return el
