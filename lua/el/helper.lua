@@ -2,27 +2,35 @@ local meta = require('el.meta')
 
 local helper = {}
 
+helper.nvim_buf_get_var = function(bufnr, var_name)
+  local ok, result = pcall(function()
+    return vim.api.nvim_buf_get_var(bufnr, var_name)
+  end)
+
+  if ok then
+    return result
+  end
+end
+
 helper.buf_var = function(var_name)
   return function(_, buffer)
-    local ok, result = pcall(function()
-      return vim.api.nvim_buf_get_var(buffer.bufnr, var_name)
-    end)
+    return helper.nvim_buf_get_var(buffer.bufnr, var_name)
+  end
+end
 
-    if ok then
-      return result
-    end
+helper.nvim_win_get_var = function(win_id, var_name)
+  local ok, result = pcall(function()
+    return vim.api.nvim_win_get_var(win_id, var_name)
+  end)
+
+  if ok then
+    return result
   end
 end
 
 helper.win_var = function(var_name)
-  return function(window)
-    local ok, result = pcall(function()
-      return vim.api.nvim_win_get_var(window.win_id, var_name)
-    end)
-
-    if ok then
-      return result
-    end
+  return function(window, _)
+    return helper.nvim_win_get_var(window.win_id, var_name)
   end
 end
 

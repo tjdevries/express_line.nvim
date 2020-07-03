@@ -1,8 +1,10 @@
 -- TODO: Comment out later when stablized
 package.loaded['el'] = nil
+package.loaded['el.data'] = nil
 package.loaded['el.builtin'] = nil
 package.loaded['el.sections'] = nil
 package.loaded['el.extensions'] = nil
+package.loaded['el.subscribe'] = nil
 package.loaded['el.meta'] = nil
 package.loaded['el.helper'] = nil
 package.loaded['luvjob'] = nil
@@ -14,6 +16,7 @@ local extensions = require('el.extensions')
 local helper = require('el.helper')
 local sections = require('el.sections')
 local meta = require('el.meta')
+local subscribe = require('el.subscribe')
 
 local lsp_statusline = require('el.plugins.lsp_status')
 
@@ -48,13 +51,19 @@ local status_line_setter = function(win_id)
     sections.split,
     -- lsp_statusline.segment,
     lsp_statusline.current_function,
-    extensions.git_changes,
-    helper.async_buf_setter(
-      win_id,
-      'el_git_stat',
-      extensions.git_changes,
-      5000
+    subscribe.buf_autocmd(
+      "el_git_status",
+      "BufWritePost",
+      function(window, buffer)
+        return extensions.git_changes(window, buffer)
+      end
     ),
+    -- helper.async_buf_setter(
+    --   win_id,
+    --   'el_git_stat',
+    --   extensions.git_changes,
+    --   5000
+    -- ),
     '[', builtin.line, ' : ',  builtin.column, ']',
     sections.collapse_builtin{
       '[',
@@ -155,34 +164,6 @@ el._window_status_lines = setmetatable({}, {
 
 el.results = {}
 
-el.blocks = {}
-
-el.blocks.highlight = function(name, contents)
-  return string.format('%s#%s#%s%%*', '%', name, contents)
-end
-
-el.new_extension = function(global)
-end
-
-
-el.extensions = {}
-
-el.extensions.display_win = function(window, _)
-  return string.format(" Win ID: %s", window.win_id)
-end
-
-el.extensions.sleeper = function(wait_time)
-  return function(_, _)
-    local j = luvjob:new({
-      command = "sleep",
-      args = {wait_time},
-    })
-
-    j:start():co_wait()
-  end
-end
-
-
 el.run = function(win_id)
   return el._window_status_lines[win_id]()
 end
@@ -218,8 +199,6 @@ el.option_process = function(name, callback_number)
 
   return option_callbacks[callback_number](name, opts)
 end
-
--- el.option_set_subscribe("filetype", function(opts) print(vim.inspect(opts)) end)
 
 if false then
   vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid())

@@ -24,4 +24,27 @@ data.modes = {
    t      = {'Term  ', 'T', 'TerminalMode'},
 }
 
-return data 
+data.mode_highlights = {
+  n      = 'ElNormal',
+  no     = 'ElNormalOperatorPending',
+  v      = 'ElVisual',
+  V      = 'ElVisualLine',
+  [''] = 'ElVisualBlock',
+  s      = 'ElSelect',
+  S      = 'ElSLine',
+  [''] = 'ElSBlock',
+  i      = 'ElInsert',
+  ic     = 'ElInsertCompletion',
+  R      = 'ElReplace',
+  Rv     = 'ElVirtualReplace',
+  c      = 'ElCommand',
+  cv     = 'ElCommandCV',
+  ce     = 'ElCommandEx',
+  r      = 'ElPrompt',
+  rm     = 'ElMore',
+  ['r?'] = 'ElConfirm',
+  ['!']  = 'ElShell',
+  t      = 'ElTerm',
+}
+
+return data

@@ -2,6 +2,8 @@ local luvjob = require('luvjob')
 
 local log = require('el._log')
 local modes = require('el.data').modes
+local mode_highlights = require('el.data').mode_highlights
+local sections = require('el.sections')
 
 local extensions = {}
 
@@ -57,18 +59,16 @@ extensions.git_changes = function(_, buffer)
   return ''
 end
 
-ExpressLineExtensionsMode = function()
+extensions.mode = function(_, _)
   local mode = vim.fn.mode()
 
+  local higroup = mode_highlights[mode]
   local display_name = modes[mode][1]
 
-  return string.format(' [ %s ] ', display_name)
-end
-
-extensions.mode = function(_, buffer)
-  local filetype = buffer.filetype
-
-  return string.format('%%{v:lua.ExpressLineExtensionsMode()}')
+  return sections.highlight(
+    higroup,
+    string.format('[%s]', display_name)
+  )
 end
 
 return extensions

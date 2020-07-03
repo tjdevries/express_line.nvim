@@ -39,4 +39,11 @@ sections.left_subsection = function(config)
   return to_insert
 end
 
+--- Add highlight to some contents.
+--@param higroup String: Name of the highlight grouip
+--@param contents String: The value of the contents
+sections.highlight = function(higroup, contents)
+  return string.format('%s#%s#%s%%*', '%', higroup, contents)
+end
+
 return sections
