@@ -34,13 +34,7 @@ local parse_shortstat_output = function(s)
   return string.format("[%s]", table.concat(result, ", "))
 end
 
-extensions.git_checker = function(_, buffer)
-  local filetype = buffer.filetype
-
-  if filetype ~= 'lua' and filetype ~= 'python' then
-    return
-  end
-
+extensions.git_changes = function(_, buffer)
   if vim.api.nvim_buf_get_option(buffer.bufnr, 'bufhidden') ~= ""
       or vim.api.nvim_buf_get_option(buffer.bufnr, 'buftype') == 'nofile' then
     return

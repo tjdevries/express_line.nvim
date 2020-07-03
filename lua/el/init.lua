@@ -20,34 +20,20 @@ local lsp_statusline = require('el.plugins.lsp_status')
 local el = {}
 
 -- Types of functions:
+-- 0. Just a string.
 -- 1. Just returns a string (built-in statusline stuff. Can't beat it)
 -- 2. Just returns a function (calls some simple thing, fast enough to run in process)
 -- 3. Returns a coroutine (calls something that might take short amount of time, so don't block if other stuff can run)
 -- 4. Returns a variable reference, gets updated via timer / autocmds / other.
---
--- TODO:
--- Autocmd subscriber (subscribe to list of autocmds, one-shot update something, displayed in statusline)
--- on_exit provider for jobstart to set the value when you're done.
 
--- builtin.file,
--- builtin.modified_tag,
--- builtin.filetype_list,
--- el.helper.buf_var('el_tester'),
--- el.helper.win_var('el_win_tester'),
--- el.helper.async_win_setter(
---   win_id,
---   'el_current_time',
---   function() return vim.fn.localtime() end,
---   5000
--- ),
--- el.helper.async_buf_setter(
---   win_id,
---   'el_git_status',
---   el.extensions.git_checker,
---   1000
--- ),
--- }
+-- Stream goals:
+--  1. Need to add color to the mode thingy.
+--  2. Write some documentation.
+--  3. Autocmd subscriber (subscribe to list of autocmds, one-shot update something, displayed in statusline)
+--  4. on_exit provider for jobstart to set the value when you're done.
 
+-- Long term goals:
+--  tabline (shout out to @KD)
 
 -- Default status line setter.
 local status_line_setter = function(win_id)
@@ -62,11 +48,12 @@ local status_line_setter = function(win_id)
     sections.split,
     -- lsp_statusline.segment,
     lsp_statusline.current_function,
+    extensions.git_changes,
     helper.async_buf_setter(
       win_id,
       'el_git_stat',
-      extensions.git_checker,
-      1000
+      extensions.git_changes,
+      5000
     ),
     '[', builtin.line, ' : ',  builtin.column, ']',
     sections.collapse_builtin{
@@ -183,24 +170,6 @@ el.extensions = {}
 el.extensions.display_win = function(window, _)
   return string.format(" Win ID: %s", window.win_id)
 end
-
-el.extensions.git_status = function(_, buffer)
-  local filetype = buffer.filetype
-
-  if filetype ~= 'lua' and filetype ~= 'python' then
-    return
-  end
-
-  local j = luvjob:new({
-    command = "git",
-    args = {"diff", "--shortstat"},
-    cwd = vim.fn.fnamemodify(buffer.name, ":h"),
-  })
-
-  return vim.trim(j:start():co_wait()._raw_output)
-end
-
-
 
 el.extensions.sleeper = function(wait_time)
   return function(_, _)
