@@ -2,6 +2,14 @@
 
 Life in the fast lane. Don't wait around. Life's too short for you to wait on your statusline.
 
+## Installation
+
+Requires master branch of Neovim.
+
+```vim
+Plug 'tjdevries/luvjob.nvim'
+Plug 'tjdevries/expressline.nvim'
+```
 
 ## Setup
 
