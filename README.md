@@ -8,7 +8,7 @@ Requires master branch of Neovim.
 
 ```vim
 Plug 'tjdevries/luvjob.nvim'
-Plug 'tjdevries/expressline.nvim'
+Plug 'tjdevries/express_line.nvim'
 ```
 
 ## Setup
