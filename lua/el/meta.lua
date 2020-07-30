@@ -33,6 +33,10 @@ local buf_lookups = {
     return vim.api.nvim_buf_get_name(buffer.bufnr)
   end,
 
+  is_git = function(buffer)
+    return
+  end,
+
   lsp = function(buffer)
     return not vim.tbl_isempty(vim.tbl_keys(vim.lsp.buf_get_clients(buffer.bufnr)))
   end

@@ -42,6 +42,10 @@ extensions.git_changes = function(_, buffer)
     return
   end
 
+  if vim.fn.filereadable(buffer.name) ~= 1 then
+    return
+  end
+
   local j = luvjob:new({
     command = "git",
     args = {"diff", "--shortstat", buffer.name},
