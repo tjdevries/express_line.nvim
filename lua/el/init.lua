@@ -1,19 +1,5 @@
--- TODO: Comment out later when stablized
-package.loaded['el'] = nil
-package.loaded['el.data'] = nil
-package.loaded['el.builtin'] = nil
-package.loaded['el.sections'] = nil
-package.loaded['el.extensions'] = nil
-package.loaded['el.subscribe'] = nil
-package.loaded['el.meta'] = nil
-package.loaded['el.helper'] = nil
-package.loaded['luvjob'] = nil
-
-local luvjob = require('luvjob')
-
 local builtin = require('el.builtin')
 local extensions = require('el.extensions')
-local helper = require('el.helper')
 local sections = require('el.sections')
 local meta = require('el.meta')
 local subscribe = require('el.subscribe')

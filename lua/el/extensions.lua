@@ -1,4 +1,4 @@
-local luvjob = require('luvjob')
+local Job = require('plenary.job')
 
 local log = require('el._log')
 local modes = require('el.data').modes
@@ -46,7 +46,7 @@ extensions.git_changes = function(_, buffer)
     return
   end
 
-  local j = luvjob:new({
+  local j = Job:new({
     command = "git",
     args = {"diff", "--shortstat", buffer.name},
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),

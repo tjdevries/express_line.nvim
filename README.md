@@ -7,7 +7,9 @@ Life in the fast lane. Don't wait around. Life's too short for you to wait on yo
 Requires master branch of Neovim.
 
 ```vim
-Plug 'tjdevries/luvjob.nvim'
+" Note: This used to be luvjob, but plenary is required now.
+Plug 'nvim-lua/plenary.nvim'
+
 Plug 'tjdevries/express_line.nvim'
 ```
 

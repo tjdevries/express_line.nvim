@@ -11,7 +11,8 @@ el_lsp_status.segment = function(_, buffer)
     return ''
   end
 
-  return require('lsp-status').status()
+  local ok, result = pcall(function() return require('lsp-status').status() end)
+  return ok and result or ''
 end
 
 el_lsp_status.current_function = function(_, buffer)
@@ -19,8 +20,8 @@ el_lsp_status.current_function = function(_, buffer)
     return ''
   end
 
-  local current_func = get_current_function(_, buffer)
-  if current_func then
+  local ok, current_func = pcall(function() return get_current_function(_, buffer) end)
+  if ok and current_func then
     return string.format('[ %s ]', current_func)
   end
 
