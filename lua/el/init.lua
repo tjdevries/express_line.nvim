@@ -1,7 +1,9 @@
 local builtin = require('el.builtin')
 local extensions = require('el.extensions')
-local sections = require('el.sections')
+local log = require('el.log')
 local meta = require('el.meta')
+local processor = require('el.processor')
+local sections = require('el.sections')
 local subscribe = require('el.subscribe')
 
 local lsp_statusline = require('el.plugins.lsp_status')
@@ -24,18 +26,46 @@ local el = {}
 -- Long term goals:
 --  tabline (shout out to @KD)
 
--- Default status line setter.
-local status_line_setter = function(win_id)
+
+local get_new_windows_table = function()
+  return setmetatable({}, {
+    __index = function(self, win_id)
+      log.debug("Generating statusline for:", win_id)
+
+      if not el.statusline_generator then
+        log.debug("No statusline_generator for now")
+        return function() return '' end
+      end
+
+      -- Gather up functions to use when evaluating statusline
+      local items = vim.tbl_flatten(el.statusline_generator(win_id))
+
+      local window = meta.Window:new(win_id)
+
+      self[win_id] = processor.new(items, window)
+
+      return self[win_id]
+    end,
+  })
+end
+
+el._window_status_lines = get_new_windows_table()
+
+el.reset_windows = function()
+  el._window_status_lines = get_new_windows_table()
+end
+
+local default_statusline_generator = function(win_id)
   return {
     extensions.mode,
     sections.split,
     builtin.file,
-    sections.collapse_builtin{
+    sections.collapse_builtin {
       ' ',
       builtin.modified_flag
     },
     sections.split,
-    -- lsp_statusline.segment,
+    lsp_statusline.segment,
     lsp_statusline.current_function,
     subscribe.buf_autocmd(
       "el_git_status",
@@ -61,133 +91,32 @@ local status_line_setter = function(win_id)
   }
 end
 
-el.set_statusline_generator = function(item_generator)
-  vim.validate { item_generator = { item_generator, 'f' } }
-
-  status_line_setter = item_generator
-end
-
-el._window_status_lines = setmetatable({}, {
-  __index = function(self, win_id)
-    -- Gather up functions to use when evaluating statusline
-    local items = vim.tbl_flatten(status_line_setter(win_id))
-
-    local window = meta.Window:new(win_id)
-
-    self[win_id] = function()
-      if not vim.fn.nvim_win_is_valid(win_id) then
-        return
-      end
-
-      -- Gather up buffer info:
-      local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
-
-      -- Start up variable referencers
-      -- Start up coroutine dudes
-      -- Collect functions
-      -- Return strings
-
-      local waiting = {}
-
-      local statusline = {}
-      table.foreach(items, function(k, v)
-        if type(v) == 'string' then
-          statusline[k] = v
-        elseif type(v) == 'function' then
-          local result = v(window, buffer)
-
-          if type(result) == 'thread' then
-            table.insert(waiting, { index = k, thread = result })
-          else
-            statusline[k] = result
-          end
-        end
-      end)
-
-      local remaining = table.getn(waiting)
-      local completed = 0
-
-      local start = os.time()
-      while start + 2 > os.time() do
-        if remaining == completed then
-          break
-        end
-
-        for i = 1, remaining do
-          local wait_val = waiting[i]
-
-          if wait_val ~= nil then
-            local index, thread = wait_val.index, wait_val.thread
-            local _, res = coroutine.resume(thread, window, buffer)
-
-            if coroutine.status(thread) == 'dead' then
-              statusline[index] = res
-
-              -- Remove
-              completed = completed + 1
-              waiting[i] = nil
-            end
-          end
-        end
-      end
-
-      -- Filter out nil values and do fast concat
-      local final = {}
-      table.foreach(statusline, function(_, v)
-        if v == nil then
-          return
-        end
-
-        table.insert(final, v)
-      end)
-
-      return table.concat(final, "")
-    end
-
-    return self[win_id]
-  end,
-})
-
-el.results = {}
-
 el.run = function(win_id)
   return el._window_status_lines[win_id]()
 end
 
-el.clear = function(win_id)
-  win_id = vim.api.nvim_win_get_number(win_id)
-  el._window_status_lines[win_id] = nil
+el.setup = function(opts)
+  opts = opts or {}
+
+  local generator = opts.generator or default_statusline_generator
+  vim.validate { generator = { generator, 'f' } }
+
+  el.statusline_generator = generator
+  el.reset_windows()
+
+  -- Setup autocmds to make sure 
+  vim.cmd [=[augroup ExpressLineAutoSetup]=]
+  vim.cmd [=[  au!]=]
+  vim.cmd [=[  autocmd BufWinEnter * :lua vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid()) ]=]
+  vim.cmd [=[augroup END]=]
+
+  vim.cmd [[doautocmd BufWinEnter]]
 end
 
+el._test = function()
+  require('plenary.reload').reload_module('el', true)
 
-local option_callbacks = setmetatable({}, {
-  -- TODO: Could probably use v here.
-  __mode = "v"
-})
-
-el.option_set_subscribe = function(group, option_pattern, callback)
-  table.insert(option_callbacks, callback)
-  local callback_number = #option_callbacks
-
-  vim.cmd(string.format([[augroup %s]], group))
-  vim.cmd(string.format([[  autocmd OptionSet %s lua el.option_process("<amatch>", %s)]], option_pattern, callback_number))
-  vim.cmd               [[augroup END]]
-end
-
-el.option_process = function(name, callback_number)
-  local option_type = vim.v.option_type
-  local option_new = vim.v.option_new
-
-  local opts = {
-    option_type = option_type,
-    option_new = option_new,
-  }
-
-  return option_callbacks[callback_number](name, opts)
-end
-
-if false then
-  vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid())
+  require('el').setup()
 end
 
 

@@ -101,4 +101,32 @@ end
 subscribe.option_set = function()
 end
 
+--[==[
+local option_callbacks = setmetatable({}, {
+  -- TODO: Could probably use v here.
+  __mode = "v"
+})
+
+el.option_set_subscribe = function(group, option_pattern, callback)
+  table.insert(option_callbacks, callback)
+  local callback_number = #option_callbacks
+
+  vim.cmd(string.format([[augroup %s]], group))
+  vim.cmd(string.format([[  autocmd OptionSet %s lua el.option_process("<amatch>", %s)]], option_pattern, callback_number))
+  vim.cmd               [[augroup END]]
+end
+
+el.option_process = function(name, callback_number)
+  local option_type = vim.v.option_type
+  local option_new = vim.v.option_new
+
+  local opts = {
+    option_type = option_type,
+    option_new = option_new,
+  }
+
+  return option_callbacks[callback_number](name, opts)
+end
+--]==]
+
 return subscribe
