@@ -3,6 +3,8 @@ local meta = require('el.meta')
 local processor = {}
 
 function processor.new(items, window)
+  local win_id = window.win_id
+
   return function()
     if not vim.fn.nvim_win_is_valid(win_id) then
       return

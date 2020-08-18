@@ -1,5 +1,6 @@
-local meta = require('el.meta')
 local helper = require('el.helper')
+local log = require('el.log')
+local meta = require('el.meta')
 
 -- TODO:
 -- Should not error when the variable doesn't exist
@@ -64,6 +65,8 @@ end
 subscribe.buf_autocmd = function(identifier, au_events, callback)
   return function(_, buffer)
     if _ElBufSubscriptions[buffer.bufnr][identifier] == nil then
+      log.debug("Generating callback for", identifier, buffer.bufnr)
+
       vim.cmd [[augroup ElBufSubscriptions]]
       -- TODO: When we add native lua callbacks to neovim for autocmds, we can make this prettier.
       vim.cmd(string.format(
