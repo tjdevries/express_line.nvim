@@ -2,6 +2,8 @@
 
 Life in the fast lane. Don't wait around. Life's too short for you to wait on your statusline.
 
+![Express Line screen](media/screen.png)
+
 ## Installation
 
 Requires master branch of Neovim.
