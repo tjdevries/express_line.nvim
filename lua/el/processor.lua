@@ -25,7 +25,11 @@ function processor.new(items, window)
       if type(v) == 'string' then
         statusline[k] = v
       elseif type(v) == 'function' then
-        local result = v(window, buffer)
+        local ok, result = pcall(v, window, buffer)
+
+        if not ok then
+          statusline[k] = ''
+        end
 
         if type(result) == 'thread' then
           table.insert(waiting, { index = k, thread = result })

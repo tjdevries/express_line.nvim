@@ -1,5 +1,3 @@
-package.loaded['el.plugins.lsp_status'] = nil
-
 local helper = require('el.helper')
 
 local get_current_function = helper.buf_var('lsp_current_function')
