@@ -2,7 +2,7 @@
 
 Life in the fast lane. Don't wait around. Life's too short for you to wait on your statusline.
 
-![Express Line screen](media/screen.png)
+![Express Line screen](https://raw.githubusercontent.com/tjdevries/media.repo/master/express_line.nvim/rocker_express.png)
 
 ## Installation
 
