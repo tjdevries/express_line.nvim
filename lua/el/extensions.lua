@@ -1,6 +1,5 @@
 local Job = require('plenary.job')
 
-local log = require('el._log')
 local modes = require('el.data').modes
 local mode_highlights = require('el.data').mode_highlights
 local sections = require('el.sections')
@@ -69,10 +68,15 @@ extensions.mode = function(_, _)
   local higroup = mode_highlights[mode]
   local display_name = modes[mode][1]
 
-  return sections.highlight(
-    higroup,
-    string.format('[%s]', display_name)
-  )
+  return sections.highlight(higroup, string.format('[%s]', display_name))
+end
+
+extensions.file_icon = function(_, buffer)
+  local ok, icon = pcall(function()
+    return require('nvim-web-devicons').get_icon(buffer.name, buffer.filetype,
+                                                 {default = true})
+  end)
+  return ok and icon or ''
 end
 
 return extensions
