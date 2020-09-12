@@ -8,6 +8,30 @@ builtin.file_relative = '%f'
 --   F S   Full path to the file in the buffer.
 builtin.full_file = '%F'
 
+builtin.shortened_file = function(_, buffer)
+  return vim.fn.pathshorten(buffer.name)
+end
+
+builtin.tail_file = function(_, buffer)
+  return vim.fn.fnamemodify(buffer.name, ':t')
+end
+
+builtin.responsive_file = function(shortened_transition, tail_transition)
+  if tail_transition == nil then
+    tail_transition = 0
+  end
+
+  return function(window, buffer)
+    if window.width  < tail_transition then
+      return builtin.tail_file(window, buffer)
+    elseif window.width < shortened_transition then
+      return builtin.shortened_file(window, buffer)
+    else
+      return builtin.file
+    end
+  end
+end
+
 --   t S   File name (tail) of file in the buffer.
 builtin.tail = '%t'
 

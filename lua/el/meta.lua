@@ -76,20 +76,30 @@ meta.Buffer = Buffer
 meta.Window = {}
 
 local win_looksup = {
+  width = function(window)
+    return vim.api.nvim_win_get_width(window.win_id), false
+  end,
+
+  height = function(window)
+    return vim.api.nvim_win_get_height(window.win_id), false
+  end,
 }
 
 local window_mt = {
   __index = function(t, k)
-    local result = nil
+    local result, should_save = nil, nil
 
     if meta.Window[k] ~= nil then
       result = meta.Window[k]
     elseif win_looksup[k] ~= nil then
-      result = win_looksup[k](t)
+      result, should_save = win_looksup[k](t)
     end
 
-    t[k] = result
-    return t[k]
+    if should_save ~= false then
+      t[k] = result
+    end
+
+    return result
   end
 }
 
