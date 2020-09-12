@@ -52,7 +52,7 @@ extensions.git_changes = function(_, buffer)
   })
 
   local ok, result = pcall(function()
-    return parse_shortstat_output(vim.trim(j:start():wait()._raw_output))
+    return parse_shortstat_output(vim.trim(j:sync()[1]))
   end)
 
   if ok then
