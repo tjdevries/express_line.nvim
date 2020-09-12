@@ -86,3 +86,64 @@ end
 -- And then when you're all done, just call
 require('el').setup { generator = generator }
 ```
+
+## Extensions
+
+`express_line.nvim` comes with some built-in extensions. You can use them inside your custom generator function.
+
+Taking the following skeleton code as starting point:
+
+```lua
+local extensions = require('el.extensions')
+local subscribe = require('el.subscribe')
+local generator = function(_window, buffer) 
+   local segments = {}
+end
+require('el').setup({generator = generator})
+```
+These are the current extensions you can use in your custom generator function
+
+### Git changes
+
+Outputs a git shortstat output if you are in a git project.
+
+```lua
+   -- ...
+   table.insert(segments,
+    subscribe.buf_autocmd(
+      "el_git_status",
+      "BufWritePost",
+      function(window, buffer)
+        return extensions.git_changes(window, buffer)
+      end
+    ))
+    -- ...
+```
+
+### Mode
+
+Mode returns the current mode
+
+```lua
+   -- ...
+   table.insert(segments, extensions.mode)
+    -- ...
+```
+
+### File Icon
+
+Depends on [`nvim-web-devicons`](https://github.com/kyazdani42/nvim-web-devicons)
+
+Outputs the ascii icon for the current file based on its filetype
+
+```lua
+   -- ...
+   table.insert(segments,
+    subscribe.buf_autocmd(
+      "el_file_icon",
+      "BufRead",
+      function(_, buffer)
+        return extensions.file_icon(_, buffer)
+      end
+    ))
+```
