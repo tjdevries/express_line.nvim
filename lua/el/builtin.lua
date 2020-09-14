@@ -105,9 +105,6 @@ builtin.printer_page = '%N'
 --   l N   Line number.
 builtin.line = '%l'
 builtin.line_number = builtin.line
-builtin.line_with_width = function(width)
-  return '%-0' .. width .. 'l'
-end
 
 --   L N   Number of lines in buffer.
 builtin.number_of_lines = '%L'
@@ -115,9 +112,6 @@ builtin.number_of_lines = '%L'
 --   c N   Column number.
 builtin.column = '%c'
 builtin.column_number = builtin.column
-builtin.column_with_width = function(width)
-  return '%-0' .. width .. 'c'
-end
 
 --   v N   Virtual column number.
 builtin.virtual_column = '%v'

@@ -147,3 +147,18 @@ Outputs the ascii icon for the current file based on its filetype
       end
     ))
 ```
+
+## FAQ
+
+> `builtin.line_number` or `builtin.column_number` shift other elements when their width changes.
+
+Use right or left (`-`) padding to fix elements' width:
+
+Example:
+
+```lua
+'[', '%3l', ':', '%2c', ']'   -- returns: '[  1: 1]'
+'[', '%-3l', ':', '%-2c', ']' -- returns: '[1  :1 ]'
+```
+
+See `:help 'statusline'` for more information.
