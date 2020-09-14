@@ -1,3 +1,43 @@
-highlight default link ElNormal Function
-highlight default link ElInsert MsgSeparator
+" TODO: We can pick more colors for these by default.
+"   I have no idea what people usually do for this.
 highlight default link ElCommand Constant
+highlight default link ElCommandCV Statusline
+highlight default link ElCommandEx Statusline
+highlight default link ElConfirm Statusline
+highlight default link ElInsertCompletion Statusline
+highlight default link ElInsert MsgSeparator
+highlight default link ElMore Statusline
+highlight default link ElNormal Function
+highlight default link ElNormalOperatorPending Statusline
+highlight default link ElPrompt Statusline
+highlight default link ElReplace Statusline
+highlight default link ElSBlock Statusline
+highlight default link ElSelect Statusline
+highlight default link ElShell Statusline
+highlight default link ElSLine Statusline
+highlight default link ElTerm Statusline
+highlight default link ElVirtualReplace Statusline
+highlight default link ElVisualBlock Statusline
+highlight default link ElVisualLine Statusline
+highlight default link ElVisual Statusline
+
+highlight default link ElCommandInactive ElCommand
+highlight default link ElCommandCVInactive ElCommandCV
+highlight default link ElCommandExInactive ElCommandEx
+highlight default link ElConfirmInactive ElConfirm
+highlight default link ElInsertCompletionInactive ElInsertCompletion
+highlight default link ElInsertInactive ElInsert
+highlight default link ElMoreInactive ElMore
+highlight default link ElNormalInactive ElNormal
+highlight default link ElNormalOperatorPendingInactive ElNormalOperatorPending
+highlight default link ElPromptInactive ElPrompt
+highlight default link ElReplaceInactive ElReplace
+highlight default link ElSBlockInactive ElSBlock
+highlight default link ElSelectInactive ElSelect
+highlight default link ElShellInactive ElShell
+highlight default link ElSLineInactive ElSLine
+highlight default link ElTermInactive ElTerm
+highlight default link ElVirtualReplaceInactive ElVirtualReplace
+highlight default link ElVisualBlockInactive ElVisualBlock
+highlight default link ElVisualLineInactive ElVisualLine
+highlight default link ElVisualInactive ElVisual

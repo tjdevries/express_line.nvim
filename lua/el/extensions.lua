@@ -62,11 +62,15 @@ extensions.git_changes = function(_, buffer)
   return ''
 end
 
-extensions.mode = function(_, _)
-  local mode = vim.fn.mode()
+extensions.mode = function(_, buffer)
+  local mode = vim.api.nvim_get_mode().mode
 
   local higroup = mode_highlights[mode]
   local display_name = modes[mode][1]
+
+  if buffer.bufnr ~= vim.api.nvim_get_current_buf() then
+    higroup = higroup .. "Inactive"
+  end
 
   return sections.highlight(higroup, string.format('[%s]', display_name))
 end
