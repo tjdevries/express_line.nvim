@@ -84,6 +84,43 @@ subscribe.buf_autocmd = function(identifier, au_events, callback)
   end
 end
 
+--- Subscribe to user autocmd.
+---<pre>
+--- subscribe.user_autocmd(
+---     'el_git_hunks', 'GitGutter',
+---     function(window, buffer)
+---         return
+---     end
+--- )
+---</pre>
+subscribe.user_autocmd = function(identifier, au_events, callback)
+  return function(_, buffer)
+    if _ElBufSubscriptions[buffer.bufnr][identifier] == nil then
+      log.debug("Generating user callback for", identifier, buffer.bufnr)
+
+      vim.cmd [[augroup ElUserSubscriptions]]
+      vim.cmd(string.format(
+        [[autocmd User %s :lua require("el.subscribe")._process_buf_callback(%s, "%s")]],
+        au_events, buffer.bufnr, buffer.bufnr, identifier
+      ))
+      vim.cmd [[augroup END]]
+
+      _ElBufSubscriptions[buffer.bufnr][identifier] = function(_, callback_buffer)
+        -- Just to be certain that we don't call this at times that we should not.
+        if callback_buffer.bufnr ~= buffer.bufnr then
+          return
+        end
+
+        callback(nil, callback_buffer)
+      end
+
+      vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(nil, buffer) or '')
+    end
+
+    return helper.nvim_buf_get_var(buffer.bufnr, identifier)
+  end
+end
+
 subscribe._process_callbacks = function(identifier)
 end
 
