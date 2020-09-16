@@ -53,13 +53,13 @@ local generator = function()
     table.insert(el_segments, builtin.file)
 
     -- Option 2, just a function that returns a string.
-    local extensions = require('el.extenions')
+    local extensions = require('el.extensions')
     table.insert(el_segments, extensions.mode) -- mode returns the current mode.
 
     -- Option 3, returns a function that takes in a Window and a Buffer. See |:help el.Window| and |:help el.Buffer|
     --
     -- With this option, you don't have to worry about escaping / calling the function in the correct way to get the current buffer and window.
-    local function file_namer = function(_window, buffer)
+    local file_namer = function(_window, buffer)
       return buffer.name
     end
     table.insert(el_segments, file_namer)
@@ -75,12 +75,15 @@ local generator = function()
     --  run timers which update buffer or window variables at a certain frequency.
     --
     --  These can be used to set infrequrently updated values without waiting.
+    local helper = require("el.helper")
     table.insert(el_segments, helper.async_buf_setter(
       win_id,
       'el_git_stat',
       extensions.git_changes,
       5000
     ))
+
+    return el_segments
 end
 
 -- And then when you're all done, just call
@@ -96,7 +99,7 @@ Taking the following skeleton code as starting point:
 ```lua
 local extensions = require('el.extensions')
 local subscribe = require('el.subscribe')
-local generator = function(_window, buffer) 
+local generator = function(_window, buffer)
    local segments = {}
 end
 require('el').setup({generator = generator})
