@@ -21,6 +21,13 @@ _ElBufSubscriptions = _ElBufSubscriptions or setmetatable({}, {
   end
 })
 
+_ElUserSubscriptions = _ElUserSubscriptions or setmetatable({}, {
+  __index = function(t, k)
+    rawset(t, k, {})
+    return rawget(t, k)
+  end
+})
+
 local _current_callbacks = {}
 
 --[[
@@ -100,12 +107,12 @@ subscribe.user_autocmd = function(identifier, au_events, callback)
 
       vim.cmd [[augroup ElUserSubscriptions]]
       vim.cmd(string.format(
-        [[autocmd User %s :lua require("el.subscribe")._process_buf_callback(%s, "%s")]],
-        au_events, buffer.bufnr, buffer.bufnr, identifier
+        [[autocmd User %s :lua require("el.subscribe")._process_user_callback("%s")]],
+        au_events, au_events
       ))
       vim.cmd [[augroup END]]
 
-      _ElBufSubscriptions[buffer.bufnr][identifier] = function(_, callback_buffer)
+      _ElUserSubscriptions[au_events][buffer.bufnr] = function(_, callback_buffer)
         -- Just to be certain that we don't call this at times that we should not.
         if callback_buffer.bufnr ~= buffer.bufnr then
           return
@@ -136,6 +143,9 @@ subscribe._process_buf_callback = function(bufnr, identifier)
     identifier,
     cb(nil, meta.Buffer:new(bufnr)) or ''
   )
+end
+
+subscribe._process_user_callback = function(user_autocmd)
 end
 
 subscribe.option_set = function()
