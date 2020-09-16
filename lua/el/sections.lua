@@ -40,10 +40,24 @@ sections.left_subsection = function(config)
 end
 
 --- Add highlight to some contents.
---@param higroup String: Name of the highlight grouip
+--@param higroup String|table: Name of the highlight group.
+--                              If string, then always set to this highlight group
+--                              If table, keys are `active` and `inactive` for different highlights
 --@param contents String: The value of the contents
 sections.highlight = function(higroup, contents)
-  return string.format('%s#%s#%s%%*', '%', higroup, contents)
+  if type(higroup) == "string" then
+    return string.format('%s#%s#%s%%*', '%', higroup, contents)
+  elseif type(higroup) == "table" then
+    return function(_, buffer)
+      if buffer.is_active then
+        return sections.highlight(higroup.active, contents)
+      else
+        return sections.highlight(higroup.inactive, contents)
+      end
+    end
+  else
+    error("unexpected higroup: " .. tostring(higroup))
+  end
 end
 
 return sections

@@ -39,6 +39,10 @@ local buf_lookups = {
 
   lsp = function(buffer)
     return not vim.tbl_isempty(vim.tbl_keys(vim.lsp.buf_get_clients(buffer.bufnr)))
+  end,
+
+  is_active = function(buffer)
+    return buffer.bufnr ~= vim.api.nvim_get_current_buf()
   end
 }
 

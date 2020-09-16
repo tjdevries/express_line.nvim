@@ -68,7 +68,7 @@ extensions.mode = function(_, buffer)
   local higroup = mode_highlights[mode]
   local display_name = modes[mode][1]
 
-  if buffer.bufnr ~= vim.api.nvim_get_current_buf() then
+  if not buffer.is_active then
     higroup = higroup .. "Inactive"
   end
 
