@@ -60,4 +60,32 @@ sections.highlight = function(higroup, contents)
   end
 end
 
+--- Filetype only sections.
+---@param filetypes string|table If string, then only the name of the filetype
+---                              If table, then list of filetypes
+---@param contents string|function  If string, return it.
+---                                 If function, call function(win, buf)
+sections.filetype = function(filetypes, contents)
+  local acceptable_fts = {}
+  if type(filetypes) == 'string' then
+    acceptable_fts[filetypes] = true
+  else
+    for _, ft in ipairs(filetypes) do
+      acceptable_fts[ft] = true
+    end
+  end
+
+  return function(window, buffer)
+    if not acceptable_fts[buffer.filetype] then
+      return
+    end
+
+    if type(contents) == 'string' then
+      return contents
+    else
+      return contents(window, buffer)
+    end
+  end
+end
+
 return sections
