@@ -107,7 +107,7 @@ el.setup = function(opts)
   -- Setup autocmds to make sure 
   vim.cmd [=[augroup ExpressLineAutoSetup]=]
   vim.cmd [=[  au!]=]
-  vim.cmd [=[  autocmd BufWinEnter * :lua vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid()) ]=]
+  vim.cmd [=[  autocmd BufWinEnter,WinEnter * :lua vim.wo.statusline = string.format([[%%!luaeval('require("el").run(%s)')]], vim.fn.win_getid()) ]=]
   vim.cmd [=[augroup END]=]
 
   vim.cmd [[doautocmd BufWinEnter]]
