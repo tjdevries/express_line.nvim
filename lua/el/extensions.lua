@@ -85,8 +85,11 @@ extensions.mode = extensions.gen_mode()
 
 extensions.file_icon = function(_, buffer)
   local ok, icon = pcall(function()
-    return require('nvim-web-devicons').get_icon(buffer.name, buffer.filetype,
-                                                 {default = true})
+    return require('nvim-web-devicons').get_icon(
+      buffer.name,
+      buffer.extension,
+      {default = true}
+    )
   end)
   return ok and icon or ''
 end

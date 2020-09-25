@@ -33,6 +33,10 @@ local buf_lookups = {
     return vim.api.nvim_buf_get_name(buffer.bufnr)
   end,
 
+  extension = function(buffer)
+    return vim.fn.fnamemodify(buffer.name, ':e')
+  end,
+
   is_git = function(buffer)
     return
   end,
