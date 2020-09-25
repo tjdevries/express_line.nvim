@@ -62,18 +62,26 @@ extensions.git_changes = function(_, buffer)
   return ''
 end
 
-extensions.mode = function(_, buffer)
-  local mode = vim.api.nvim_get_mode().mode
+extensions.gen_mode = function(opts)
+  opts = opts or {}
 
-  local higroup = mode_highlights[mode]
-  local display_name = modes[mode][1]
+  local format_string = opts.format_string or '[%s]'
 
-  if not buffer.is_active then
-    higroup = higroup .. "Inactive"
+  return function(_, buffer)
+    local mode = vim.api.nvim_get_mode().mode
+
+    local higroup = mode_highlights[mode]
+    local display_name = modes[mode][1]
+
+    if not buffer.is_active then
+      higroup = higroup .. "Inactive"
+    end
+
+    return sections.highlight(higroup, string.format(format_string, display_name))
   end
-
-  return sections.highlight(higroup, string.format('[%s]', display_name))
 end
+
+extensions.mode = extensions.gen_mode()
 
 extensions.file_icon = function(_, buffer)
   local ok, icon = pcall(function()
