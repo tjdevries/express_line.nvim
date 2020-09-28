@@ -9,7 +9,7 @@ builtin.file_relative = '%f'
 builtin.full_file = '%F'
 
 builtin.shortened_file = function(_, buffer)
-  return vim.fn.pathshorten(buffer.name)
+  return vim.fn.pathshorten(vim.fn.fnamemodify(buffer.name, ':.'))
 end
 
 builtin.tail_file = function(_, buffer)
