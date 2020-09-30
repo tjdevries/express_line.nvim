@@ -122,7 +122,22 @@ Outputs a git shortstat output if you are in a git project.
     ))
     -- ...
 ```
+### Git branch
 
+Outputs a git branch info if you are in a git project.
+
+```lua
+   -- ...
+   table.insert(segments,
+    subscribe.buf_autocmd(
+      "el_git_branch",
+      "BufEnter",
+      function(window, buffer)
+        return extensions.git_branch(window, buffer)
+      end
+    ))
+   -- ...
+```
 ### Mode
 
 Mode returns the current mode

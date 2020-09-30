@@ -62,6 +62,25 @@ extensions.git_changes = function(_, buffer)
   return ''
 end
 
+extensions.git_branch = function(_, buffer)
+  local j = Job:new({
+    command = "git",
+    args = {"branch", "--show-current"},
+    cwd = vim.fn.fnamemodify(buffer.name, ":h"),
+  })
+
+  local ok, result = pcall(function()
+    return vim.trim(j:sync()[1])
+  end)
+
+  if ok then
+    return result
+  end
+
+  return ''
+end
+
+
 extensions.gen_mode = function(opts)
   opts = opts or {}
 
@@ -89,6 +108,15 @@ extensions.file_icon = function(_, buffer)
       buffer.name,
       buffer.extension,
       {default = true}
+    )
+  end)
+  return ok and icon or ''
+end
+
+extensions.git_icon = function(_, buffer)
+  local ok, icon = pcall(function()
+    return require('nvim-web-devicons').get_icon(
+      '.gitattributes'
     )
   end)
   return ok and icon or ''
