@@ -63,18 +63,9 @@ extensions.git_changes = function(_, buffer)
 end
 
 extensions.git_branch = function(_, buffer)
-  if vim.api.nvim_buf_get_option(buffer.bufnr, 'bufhidden') ~= ""
-      or vim.api.nvim_buf_get_option(buffer.bufnr, 'buftype') == 'nofile' then
-    return
-  end
-
-  if vim.fn.filereadable(buffer.name) ~= 1 then
-    return
-  end
-
   local j = Job:new({
     command = "git",
-    args = {"branch", "--show-current", buffer.name},
+    args = {"branch", "--show-current"},
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),
   })
 
