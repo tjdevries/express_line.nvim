@@ -46,7 +46,7 @@ local buf_lookups = {
   end,
 
   is_active = function(buffer)
-    return buffer.bufnr ~= vim.api.nvim_get_current_buf()
+    return buffer.bufnr == vim.api.nvim_get_current_buf()
   end
 }
 
