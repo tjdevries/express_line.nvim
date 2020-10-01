@@ -86,13 +86,13 @@ extensions.gen_mode = function(opts)
 
   local format_string = opts.format_string or '[%s]'
 
-  return function(_, buffer)
+  return function(window, buffer)
     local mode = vim.api.nvim_get_mode().mode
 
     local higroup = mode_highlights[mode]
     local display_name = modes[mode][1]
 
-    if not buffer.is_active then
+    if not window.is_active then
       higroup = higroup .. "Inactive"
     end
 

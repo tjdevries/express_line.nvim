@@ -91,6 +91,10 @@ local win_looksup = {
   height = function(window)
     return vim.api.nvim_win_get_height(window.win_id), false
   end,
+
+  is_active = function(window)
+    return window.win_id == vim.api.nvim_get_current_win(), false
+  end
 }
 
 local window_mt = {
