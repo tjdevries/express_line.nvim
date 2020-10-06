@@ -58,9 +58,8 @@ extensions.git_changes = function(_, buffer)
   if ok then
     return result
   end
-
-  return ''
 end
+
 
 extensions.git_branch = function(_, buffer)
   local j = Job:new({
@@ -76,10 +75,38 @@ extensions.git_branch = function(_, buffer)
   if ok then
     return result
   end
-
-  return ''
 end
 
+
+
+local mode_dispatch = setmetatable({}, {
+  __index = function(parent, format_string)
+    local dispatcher = setmetatable({}, {
+      __index = function(child, k)
+        local higroup = mode_highlights[k]
+        local inactive_higroup = higroup .. "Inactive"
+
+        local display_name = modes[k][1]
+        local contents = string.format(format_string, display_name)
+        local highlighter = sections.gen_one_highlight(contents)
+
+        local val = function(window, buffer)
+          return highlighter(
+            window,
+            buffer,
+            (window.is_active and higroup) or inactive_higroup
+          )
+        end
+
+        rawset(child, k, val)
+        return val
+      end
+    })
+
+    rawset(parent, format_string, dispatcher)
+    return dispatcher
+  end
+})
 
 extensions.gen_mode = function(opts)
   opts = opts or {}
@@ -88,15 +115,7 @@ extensions.gen_mode = function(opts)
 
   return function(window, buffer)
     local mode = vim.api.nvim_get_mode().mode
-
-    local higroup = mode_highlights[mode]
-    local display_name = modes[mode][1]
-
-    if not window.is_active then
-      higroup = higroup .. "Inactive"
-    end
-
-    return sections.highlight(higroup, string.format(format_string, display_name))
+    return mode_dispatch[format_string][mode](window, buffer)
   end
 end
 

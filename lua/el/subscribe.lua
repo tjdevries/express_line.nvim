@@ -10,23 +10,29 @@ local subscribe = {}
 
 local _current_subscriptions = {}
 
--- Set to a global to prevent the subscriptions from accidentally getting
--- cleared during hot reloading of the plugin...
---
--- Can probably remove this once the plugin is much more stable.
-_ElBufSubscriptions = _ElBufSubscriptions or setmetatable({}, {
-  __index = function(t, k)
-    rawset(t, k, {})
-    return rawget(t, k)
-  end
-})
+subscribe._reload = function()
+  vim.cmd [[augroup ElBufSubscriptions]]
+  vim.cmd [[  au! ]]
+  vim.cmd [[augroup END]]
 
-_ElUserSubscriptions = _ElUserSubscriptions or setmetatable({}, {
-  __index = function(t, k)
-    rawset(t, k, {})
-    return rawget(t, k)
-  end
-})
+  _ElBufSubscriptions = setmetatable({}, {
+    __index = function(t, k)
+      rawset(t, k, {})
+      return rawget(t, k)
+    end
+  })
+
+  _ElUserSubscriptions = setmetatable({}, {
+    __index = function(t, k)
+      rawset(t, k, {})
+      return rawget(t, k)
+    end
+  })
+end
+
+if not _ElBufSubscriptions or not _ElUserSubscriptions then
+  subscribe._reload()
+end
 
 local _current_callbacks = {}
 
@@ -138,11 +144,16 @@ subscribe._process_buf_callback = function(bufnr, identifier)
     return
   end
 
-  vim.api.nvim_buf_set_var(
+  local res = cb(nil, meta.Buffer:new(bufnr))
+  local ok, msg = pcall(vim.api.nvim_buf_set_var,
     bufnr,
     identifier,
-    cb(nil, meta.Buffer:new(bufnr)) or ''
+    res or ''
   )
+
+  if not ok then
+    log.debug(msg, res, bufnr, identifier)
+  end
 end
 
 subscribe._process_user_callback = function(user_autocmd)

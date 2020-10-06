@@ -52,6 +52,8 @@ end
 el._window_status_lines = get_new_windows_table()
 
 el.reset_windows = function()
+  subscribe._reload()
+
   el._window_status_lines = get_new_windows_table()
 end
 

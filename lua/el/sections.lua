@@ -1,3 +1,5 @@
+local log = require('el.log')
+
 local sections = {}
 
 sections.split = '%='
@@ -39,6 +41,29 @@ sections.left_subsection = function(config)
   return to_insert
 end
 
+
+sections.gen_one_highlight = function(contents)
+  if type(contents) == "string" then
+    return function(_, _, higroup)
+      return string.format('%s#%s#%s%%*', '%', higroup, contents)
+    end
+  elseif type(contents) == "function" then
+    return function(window, buffer, higroup)
+      return string.format('%s#%s#%s%%*', '%', higroup, contents(window, buffer))
+    end
+  --[[
+  elseif type(contents) == "table" then
+    -- TODO: This might not work with nested tables ? 
+    return function()
+      -- return table.concat(vim.tbl_flatten(contents), '')
+      return '<tbl>'
+    end
+  --]]
+  else
+    error(debug.traceback("Invalid type: " .. type(contents) .. vim.inspect(contents)))
+  end
+end
+
 --- Add highlight to some contents.
 --@param higroup String|table: Name of the highlight group.
 --                              If string, then always set to this highlight group
@@ -46,13 +71,41 @@ end
 --@param contents String: The value of the contents
 sections.highlight = function(higroup, contents)
   if type(higroup) == "string" then
-    return string.format('%s#%s#%s%%*', '%', higroup, contents)
+    if type(contents) == "table" then
+      local resolved = {}
+      for _, highlighted_item in ipairs(contents) do
+        table.insert(resolved, sections.gen_one_highlight(highlighted_item))
+      end
+
+      return function(window, buffer)
+        local highlights = {}
+        for _, v in ipairs(resolved) do
+          table.insert(highlights, v(higroup, window, buffer))
+        end
+
+        return table.concat(highlights, '')
+      end
+    else
+      local resolved = sections.gen_one_highlight(contents)
+      return function(window, buffer)
+        return resolved(window, buffer, higroup)
+      end
+    end
   elseif type(higroup) == "table" then
-    return function(_, buffer)
-      if buffer.is_active then
-        return sections.highlight(higroup.active, contents)
+    local resolved = sections.gen_one_highlight(contents)
+
+    return function(window, buffer)
+      local is_active
+      if window then
+        is_active = window.is_active
+      elseif buffer then
+        is_active = buffer.is_active
+      end
+
+      if is_active then
+        return resolved(window, buffer, higroup.active)
       else
-        return sections.highlight(higroup.inactive, contents)
+        return resolved(window, buffer, higroup.inactive)
       end
     end
   else
