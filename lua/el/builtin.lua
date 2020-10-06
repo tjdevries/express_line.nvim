@@ -9,6 +9,10 @@ builtin.file_relative = '%f'
 builtin.full_file = '%F'
 
 builtin.shortened_file = function(_, buffer)
+  if buffer.name == '' then
+    return builtin.file
+  end
+
   return vim.fn.pathshorten(vim.fn.fnamemodify(buffer.name, ':.'))
 end
 
