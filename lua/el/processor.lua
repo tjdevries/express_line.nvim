@@ -2,7 +2,7 @@ local meta = require('el.meta')
 
 local processor = {}
 
-function processor.new(items, window)
+function processor.new(items, window, buffer)
   local win_id = window.win_id
 
   return function()
@@ -11,7 +11,7 @@ function processor.new(items, window)
     end
 
     -- Gather up buffer info:
-    local buffer = meta.Buffer:new(vim.api.nvim_win_get_buf(win_id))
+    buffer = meta.Buffer:new(buffer.bufnr)
 
     -- Start up variable referencers
     -- Start up coroutine dudes
@@ -21,7 +21,7 @@ function processor.new(items, window)
     local waiting = {}
 
     local statusline = {}
-    table.foreach(items, function(k, v)
+    for k, v in ipairs(items) do
       if type(v) == 'string' then
         statusline[k] = v
       elseif type(v) == 'function' then
@@ -37,7 +37,7 @@ function processor.new(items, window)
           statusline[k] = result
         end
       end
-    end)
+    end
 
     local remaining = table.getn(waiting)
     local completed = 0
