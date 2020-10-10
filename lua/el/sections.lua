@@ -1,4 +1,5 @@
 local log = require('el.log')
+local processor = require('el.processor')
 
 local sections = {}
 
@@ -137,6 +138,60 @@ sections.filetype = function(filetypes, contents)
       return contents
     else
       return contents(window, buffer)
+    end
+  end
+end
+
+--- Maximum width sections
+--- max_width:
+---     - percentage of window
+---     - absolute number of characters
+---     - generic function of your choosing
+sections.maximum_width = function(contents, max_width, opts)
+  assert(max_width, "max_width is required")
+
+  opts = opts or {}
+
+  local trailing = opts.trailing or '…'
+  if not trailing then
+    trailing = ''
+  end
+
+  local get_cutoff
+  if type(max_width) == 'number' then
+    if max_width < 1 then
+      get_cutoff = function(window)
+        return math.ceil(max_width * vim.api.nvim_win_get_width(window.win_id))
+      end
+    else
+      get_cutoff = function() return max_width end
+    end
+  elseif type(max_width) == 'function' then
+    get_cutoff = max_width
+  end
+
+  local truncate_right = opts.truncate_right
+
+  return function(window, buffer)
+    local ok, value = processor.resolve(contents, window, buffer)
+
+    if not ok then
+      return nil
+    end
+
+    local cutoff = get_cutoff(window, buffer)
+
+    return value, function(result)
+      local len = #result
+      if len > cutoff then
+        if truncate_right then
+          return string.sub(result, 1, cutoff + 1) .. trailing
+        else
+          return trailing .. string.sub(result, len - cutoff, len)
+        end
+      end
+
+      return result
     end
   end
 end

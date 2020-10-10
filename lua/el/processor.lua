@@ -6,7 +6,7 @@ function processor.new(items, window, buffer)
   local win_id = window.win_id
 
   return function()
-    if not vim.fn.nvim_win_is_valid(win_id) then
+    if not vim.api.nvim_win_is_valid(win_id) then
       return
     end
 
@@ -21,20 +21,21 @@ function processor.new(items, window, buffer)
     local waiting = {}
 
     local statusline = {}
+    local effects = {}
     for k, v in ipairs(items) do
-      if type(v) == 'string' then
-        statusline[k] = v
-      elseif type(v) == 'function' then
-        local ok, result = pcall(v, window, buffer)
+      local ok, result, effect = processor.resolve(v, window, buffer)
 
-        if not ok then
-          statusline[k] = ''
-        end
-
+      if not ok then
+        statusline[k] = ''
+      else
         if type(result) == 'thread' then
-          table.insert(waiting, { index = k, thread = result })
+          table.insert(waiting, {
+            index = k,
+            thread = result,
+            effect = effect
+          })
         else
-          statusline[k] = result
+          statusline[k], effects[k] = result, effect
         end
       end
     end
@@ -68,15 +69,30 @@ function processor.new(items, window, buffer)
 
     -- Filter out nil values and do fast concat
     local final = {}
-    table.foreach(statusline, function(_, v)
+    for k, v in ipairs(statusline) do
       if v == nil then
         return
       end
 
+      if effects[k] then
+        v = effects[k](v)
+      end
+
       table.insert(final, v)
-    end)
+    end
 
     return table.concat(final, "")
+  end
+end
+
+processor.resolve = function(value, window, buffer)
+  if type(value) == 'string' then
+    return true, value
+  elseif type(value) == 'function' then
+    return pcall(value, window, buffer)
+  else
+    -- error("Unsupported type")
+    return false
   end
 end
 

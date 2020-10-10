@@ -1,12 +1,24 @@
 local builtin = {}
 
+-- TODO: It's a bit annoying that we don't know the length of
+-- some of these items until "too late".
+--
+-- This puts us in not as good situations when we want do something
+-- with the actual result itself (like an effect).
+
+
 --   f S   Path to the file in the buffer, as typed or relative to current
 --         directory.
-builtin.file = '%f'
-builtin.file_relative = '%f'
+-- builtin.file = '%f'
+builtin.file = function(_, buffer)
+  return buffer.name
+end
+builtin.file_relative = builtin.file
 
 --   F S   Full path to the file in the buffer.
-builtin.full_file = '%F'
+builtin.full_file = function(_, buffer)
+  return vim.fn.fnamemodify(buffer.name, ':p')
+end
 
 builtin.shortened_file = function(_, buffer)
   if buffer.name == '' then
@@ -26,12 +38,12 @@ builtin.responsive_file = function(shortened_transition, tail_transition)
   end
 
   return function(window, buffer)
-    if window.width  < tail_transition then
+    if window.width < tail_transition then
       return builtin.tail_file(window, buffer)
     elseif window.width < shortened_transition then
       return builtin.shortened_file(window, buffer)
     else
-      return builtin.file
+      return builtin.file(window, buffer)
     end
   end
 end
