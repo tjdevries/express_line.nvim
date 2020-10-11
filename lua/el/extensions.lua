@@ -78,33 +78,72 @@ extensions.git_branch = function(_, buffer)
 end
 
 
+local _dispatcher = setmetatable({}, {
+  __index = function(child, k)
+    local higroup = mode_highlights[k]
+    local inactive_higroup = higroup .. "Inactive"
+
+    local display_name = modes[k][1]
+    local contents = string.format(format_string, display_name)
+    local highlighter = sections.gen_one_highlight(contents)
+
+    local previous_value
+
+    local val = function(window, buffer)
+      local is_active = vim.api.nvim_get_current_win() == window.win_id
+      if is_active ~= window.is_active then
+        print("UHHH>>>>>>>")
+      end
+
+      if not window.is_active and previous_value then
+        return previous_value
+      end
+
+      previous_value = highlighter(
+        window,
+        buffer,
+        (window.is_active and higroup) or inactive_higroup
+      )
+
+      return previous_value
+    end
+
+    rawset(child, k, val)
+    return val
+  end
+})
+
+local get_dispatcher = function()
+  local count = 0
+
+  return coroutine.wrap(function(mode, window, buffer)
+    local previous_value = nil
+
+    while true do
+      if not window.is_active and previous_value then
+        coroutine.yield(previous_value)
+      end
+
+      previous_value = count
+      count = count + 1
+      coroutine.yield(tostring(count))
+    end
+  end)
+end
 
 local mode_dispatch = setmetatable({}, {
   __index = function(parent, format_string)
-    local dispatcher = setmetatable({}, {
-      __index = function(child, k)
-        local higroup = mode_highlights[k]
-        local inactive_higroup = higroup .. "Inactive"
+    local window_table = setmetatable({}, {
+      __index = function(format_table, win_id)
+        local dispatcher = get_dispatcher()
 
-        local display_name = modes[k][1]
-        local contents = string.format(format_string, display_name)
-        local highlighter = sections.gen_one_highlight(contents)
-
-        local val = function(window, buffer)
-          return highlighter(
-            window,
-            buffer,
-            (window.is_active and higroup) or inactive_higroup
-          )
-        end
-
-        rawset(child, k, val)
-        return val
+        rawset(format_table, win_id, dispatcher)
+        return dispatcher
       end
     })
 
-    rawset(parent, format_string, dispatcher)
-    return dispatcher
+    rawset(parent, format_string, window_table)
+    return window_table
   end
 })
 
@@ -114,8 +153,9 @@ extensions.gen_mode = function(opts)
   local format_string = opts.format_string or '[%s]'
 
   return function(window, buffer)
+    print("CURWIN:", window.is_active, window.win_id, vim.api.nvim_get_current_win())
     local mode = vim.api.nvim_get_mode().mode
-    return mode_dispatch[format_string][mode](window, buffer)
+    return mode_dispatch[format_string][window.win_id](mode, window, buffer)
   end
 end
 

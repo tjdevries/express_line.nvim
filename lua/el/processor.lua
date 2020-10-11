@@ -11,6 +11,7 @@ function processor.new(items, window, buffer)
     end
 
     -- Gather up buffer info:
+    window = meta.Window:new(win_id)
     buffer = meta.Buffer:new(buffer.bufnr)
 
     -- Start up variable referencers
