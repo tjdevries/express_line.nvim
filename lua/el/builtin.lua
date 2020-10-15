@@ -11,6 +11,10 @@ local builtin = {}
 --         directory.
 -- builtin.file = '%f'
 builtin.file = function(_, buffer)
+  if buffer.name == '' then
+    return "[No Name]"
+  end
+
   return buffer.name
 end
 builtin.file_relative = builtin.file
@@ -22,7 +26,7 @@ end
 
 builtin.shortened_file = function(_, buffer)
   if buffer.name == '' then
-    return builtin.file
+    return builtin.file(_, buffer)
   end
 
   return vim.fn.pathshorten(vim.fn.fnamemodify(buffer.name, ':.'))
