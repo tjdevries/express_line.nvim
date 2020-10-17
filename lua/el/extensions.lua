@@ -153,7 +153,6 @@ extensions.gen_mode = function(opts)
   local format_string = opts.format_string or '[%s]'
 
   return function(window, buffer)
-    print("CURWIN:", window.is_active, window.win_id, vim.api.nvim_get_current_win())
     local mode = vim.api.nvim_get_mode().mode
     return mode_dispatch[format_string][window.win_id](mode, window, buffer)
   end
