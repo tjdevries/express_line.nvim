@@ -46,7 +46,8 @@ local buf_lookups = {
   end,
 
   is_active = function(buffer)
-    return buffer.bufnr == vim.api.nvim_get_current_buf()
+    -- return buffer.bufnr == vim.api.nvim_get_current_buf()
+    return buffer.bufnr == tonumber(vim.g.actual_curbuf), false
   end
 }
 
@@ -83,7 +84,7 @@ meta.Buffer = Buffer
 
 meta.Window = {}
 
-local win_looksup = {
+local win_lookups = {
   width = function(window)
     return vim.api.nvim_win_get_width(window.win_id), false
   end,
@@ -93,7 +94,7 @@ local win_looksup = {
   end,
 
   is_active = function(window)
-    return window.win_id == vim.api.nvim_get_current_win(), false
+    return window.win_id == tonumber(vim.g.actual_curwin), false
   end
 }
 
@@ -103,8 +104,8 @@ local window_mt = {
 
     if meta.Window[k] ~= nil then
       result = meta.Window[k]
-    elseif win_looksup[k] ~= nil then
-      result, should_save = win_looksup[k](t)
+    elseif win_lookups[k] ~= nil then
+      result, should_save = win_lookups[k](t)
     end
 
     if should_save ~= false then
