@@ -74,9 +74,9 @@ end
 --
 --@param identifier String: name of the variable we'll save to b:
 --@param au_events String: The events to subscribe to
---@param callback Callable: A function that takes the (_, Buffer) style callback and returns a value
+--@param callback Callable: A function that takes the (Window, Buffer) style callback and returns a value
 subscribe.buf_autocmd = function(identifier, au_events, callback)
-  return function(_, buffer)
+  return function(window, buffer)
     if _ElBufSubscriptions[buffer.bufnr][identifier] == nil then
       log.debug("Generating callback for", identifier, buffer.bufnr)
 
@@ -90,7 +90,7 @@ subscribe.buf_autocmd = function(identifier, au_events, callback)
 
       _ElBufSubscriptions[buffer.bufnr][identifier] = callback
 
-      vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(nil, buffer) or '')
+      vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(window, buffer) or '')
     end
 
     return helper.nvim_buf_get_var(buffer.bufnr, identifier)
@@ -107,7 +107,7 @@ end
 --- )
 ---</pre>
 subscribe.user_autocmd = function(identifier, au_events, callback)
-  return function(_, buffer)
+  return function(window, buffer)
     if _ElBufSubscriptions[buffer.bufnr][identifier] == nil then
       log.debug("Generating user callback for", identifier, buffer.bufnr)
 
@@ -118,16 +118,16 @@ subscribe.user_autocmd = function(identifier, au_events, callback)
       ))
       vim.cmd [[augroup END]]
 
-      _ElUserSubscriptions[au_events][buffer.bufnr] = function(_, callback_buffer)
+      _ElUserSubscriptions[au_events][buffer.bufnr] = function(callback_window, callback_buffer)
         -- Just to be certain that we don't call this at times that we should not.
         if callback_buffer.bufnr ~= buffer.bufnr then
           return
         end
 
-        callback(nil, callback_buffer)
+        callback(callback_window, callback_buffer)
       end
 
-      vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(nil, buffer) or '')
+      vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(window, buffer) or '')
     end
 
     return helper.nvim_buf_get_var(buffer.bufnr, identifier)
