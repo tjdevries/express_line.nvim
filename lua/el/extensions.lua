@@ -78,42 +78,45 @@ extensions.git_branch = function(_, buffer)
 end
 
 
-local _dispatcher = setmetatable({}, {
-  __index = function(child, k)
-    local higroup = mode_highlights[k]
-    local inactive_higroup = higroup .. "Inactive"
+local get_dispatcher = function(format_string)
+  return setmetatable({}, {
+    __index = function(child, k)
+      local higroup = mode_highlights[k]
+      local inactive_higroup = higroup .. "Inactive"
 
-    local display_name = modes[k][1]
-    local contents = string.format(format_string, display_name)
-    local highlighter = sections.gen_one_highlight(contents)
+      local display_name = modes[k][1]
+      local contents = string.format(format_string, display_name)
+      local highlighter = sections.gen_one_highlight(contents)
 
-    local previous_value
+      local previous_value
 
-    local val = function(window, buffer)
-      local is_active = vim.api.nvim_get_current_win() == window.win_id
-      if is_active ~= window.is_active then
-        print("UHHH>>>>>>>")
-      end
+      local val = function(window, buffer)
+        local is_active = vim.api.nvim_get_current_win() == window.win_id
+        if is_active ~= window.is_active then
+          print("UHHH>>>>>>>")
+        end
 
-      if not window.is_active and previous_value then
+        if not window.is_active and previous_value then
+          return previous_value
+        end
+
+        previous_value = highlighter(
+          window,
+          buffer,
+          (window.is_active and higroup) or inactive_higroup
+        )
+
         return previous_value
       end
 
-      previous_value = highlighter(
-        window,
-        buffer,
-        (window.is_active and higroup) or inactive_higroup
-      )
-
-      return previous_value
+      rawset(child, k, val)
+      return val
     end
+  })
+end
 
-    rawset(child, k, val)
-    return val
-  end
-})
 
-local get_dispatcher = function()
+local _get_dispatcher = function()
   local count = 0
 
   return coroutine.wrap(function(mode, window, buffer)
@@ -122,25 +125,26 @@ local get_dispatcher = function()
     while true do
       if not window.is_active and previous_value then
         coroutine.yield(previous_value)
+      else
+        previous_value = count
+        count = count + 1
+        coroutine.yield(tostring(count))
       end
-
-      previous_value = count
-      count = count + 1
-      coroutine.yield(tostring(count))
     end
   end)
 end
 
 local mode_dispatch = setmetatable({}, {
   __index = function(parent, format_string)
-    local window_table = setmetatable({}, {
-      __index = function(format_table, win_id)
-        local dispatcher = get_dispatcher()
+    -- local window_table = setmetatable({}, {
+    --   __index = function(format_table, win_id)
+    --     local dispatcher = get_dispatcher(format_string, win_id)
 
-        rawset(format_table, win_id, dispatcher)
-        return dispatcher
-      end
-    })
+    --     rawset(format_table, win_id, dispatcher)
+    --     return dispatcher
+    --   end
+    -- })
+    local window_table = get_dispatcher(format_string)
 
     rawset(parent, format_string, window_table)
     return window_table

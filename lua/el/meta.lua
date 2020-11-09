@@ -46,8 +46,7 @@ local buf_lookups = {
   end,
 
   is_active = function(buffer)
-    -- return buffer.bufnr == vim.api.nvim_get_current_buf()
-    return buffer.bufnr == tonumber(vim.g.actual_curbuf), false
+    return buffer.bufnr == vim.api.nvim_get_current_buf(), false
   end
 }
 
@@ -94,7 +93,7 @@ local win_lookups = {
   end,
 
   is_active = function(window)
-    return window.win_id == tonumber(vim.g.actual_curwin), false
+    return window.win_id == vim.api.nvim_get_current_win(), false
   end
 }
 

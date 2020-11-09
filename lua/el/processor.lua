@@ -1,3 +1,4 @@
+local log = require('el.log')
 local meta = require('el.meta')
 
 local processor = {}
@@ -27,6 +28,7 @@ function processor.new(items, window, buffer)
       local ok, result, effect = processor.resolve(v, window, buffer)
 
       if not ok then
+        log.debug("Failed to run", v, result)
         statusline[k] = ''
       else
         if type(result) == 'thread' then
