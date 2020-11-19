@@ -1,4 +1,4 @@
-return require('plenary').log.new {
+return require('plenary.log').new {
   -- Name of the plugin. Prepended to log messages
   plugin = 'el',
 
