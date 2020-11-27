@@ -108,24 +108,17 @@ end
 ---</pre>
 subscribe.user_autocmd = function(identifier, au_events, callback)
   return function(_, buffer)
-    if _ElBufSubscriptions[buffer.bufnr][identifier] == nil then
+    if _ElUserSubscriptions[buffer.bufnr][identifier] == nil then
       log.debug("Generating user callback for", identifier, buffer.bufnr)
 
       vim.cmd [[augroup ElUserSubscriptions]]
       vim.cmd(string.format(
-        [[autocmd User %s :lua require("el.subscribe")._process_user_callback("%s")]],
-        au_events, au_events
+        [[autocmd User %s :lua require("el.subscribe")._process_user_callback(%s, "%s")]],
+        au_events, buffer.bufnr, identifier
       ))
       vim.cmd [[augroup END]]
 
-      _ElUserSubscriptions[au_events][buffer.bufnr] = function(_, callback_buffer)
-        -- Just to be certain that we don't call this at times that we should not.
-        if callback_buffer.bufnr ~= buffer.bufnr then
-          return
-        end
-
-        callback(nil, callback_buffer)
-      end
+      _ElUserSubscriptions[buffer.bufnr][identifier] = callback
 
       vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(nil, buffer) or '')
     end
@@ -156,7 +149,24 @@ subscribe._process_buf_callback = function(bufnr, identifier)
   end
 end
 
-subscribe._process_user_callback = function(user_autocmd)
+subscribe._process_user_callback = function(bufnr, identifier)
+  local cb = _ElUserSubscriptions[bufnr][identifier]
+  if cb == nil then
+    -- TODO: Figure out how this can happen.
+    return
+  end
+
+  local res = cb(nil, meta.Buffer:new(bufnr))
+  local ok, msg = pcall(vim.api.nvim_buf_set_var,
+    bufnr,
+    identifier,
+    res or ''
+  )
+
+  if not ok then
+    log.debug(msg, res, bufnr, identifier)
+  end
+
 end
 
 subscribe.option_set = function()
