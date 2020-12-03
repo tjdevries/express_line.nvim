@@ -93,7 +93,14 @@ subscribe.buf_autocmd = function(identifier, au_events, callback)
       vim.api.nvim_buf_set_var(buffer.bufnr, identifier, callback(nil, buffer) or '')
     end
 
-    return helper.nvim_buf_get_var(buffer.bufnr, identifier)
+    -- nvim_buf_get_var shouldn't return nil, because we set the buffer var to '' if callback returns nil
+    -- we reset subscription here when nil is returned, see issue #40
+    -- new subscription will be setup next time buf_autocmd is called
+    local res = helper.nvim_buf_get_var(buffer.bufnr, identifier)
+    if not res then
+      _ElBufSubscriptions[buffer.bufnr][identifier] = nil
+    end
+    return res
   end
 end
 
