@@ -17,7 +17,14 @@ builtin.file = function(_, buffer)
 
   return buffer.name
 end
-builtin.file_relative = builtin.file
+
+builtin.file_relative = function(_, buffer)
+  if buffer.name == '' then
+    return builtin.file(_, buffer)
+  end
+
+  return vim.fn.bufname(buffer.bufnr)
+end
 
 --   F S   Full path to the file in the buffer.
 builtin.full_file = function(_, buffer)
