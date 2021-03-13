@@ -57,7 +57,7 @@ el.set_statusline = function(win_id, items)
     end
   )
 
-  vim.fn.nvim_win_set_var(win_id, 'remaining', remaining)
+  vim.api.nvim_win_set_var(win_id, 'remaining', remaining)
 
   local start = os.time()
   while start + 2 > os.time() do
@@ -87,7 +87,7 @@ el.set_statusline = function(win_id, items)
     end
   end
 
-  vim.fn.nvim_win_set_var(win_id, 'result', statusline)
+  vim.api.nvim_win_set_var(win_id, 'result', statusline)
 
   local final = {}
   table.foreach(statusline, function(k, v)
