@@ -1,6 +1,5 @@
 local Job = require('plenary.job')
 
-local modes = require('el.data').modes
 local mode_highlights = require('el.data').mode_highlights
 local sections = require('el.sections')
 
@@ -80,9 +79,11 @@ end
 
 
 local mode_dispatch = setmetatable({}, {
-  __index = function(parent, format_string)
+  __index = function(parent, opts)
     local dispatcher = setmetatable({}, {
       __index = function(child, k)
+        local format_string = opts[1]
+        local modes = opts[2]
         local higroup = mode_highlights[k]
         local inactive_higroup = higroup .. "Inactive"
 
@@ -103,7 +104,7 @@ local mode_dispatch = setmetatable({}, {
       end
     })
 
-    rawset(parent, format_string, dispatcher)
+    rawset(parent, opts, dispatcher)
     return dispatcher
   end
 })
@@ -112,10 +113,11 @@ extensions.gen_mode = function(opts)
   opts = opts or {}
 
   local format_string = opts.format_string or '[%s]'
+  local modes = opts.modes or require('el.data').modes
 
   return function(window, buffer)
     local mode = vim.api.nvim_get_mode().mode
-    return mode_dispatch[format_string][mode](window, buffer)
+    return mode_dispatch[{format_string, modes}][mode](window, buffer)
   end
 end
 
