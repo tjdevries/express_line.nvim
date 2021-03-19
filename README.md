@@ -118,7 +118,10 @@ Outputs a git shortstat output if you are in a git project.
       "el_git_status",
       "BufWritePost",
       function(window, buffer)
-        return extensions.git_changes(window, buffer)
+        local changes =  extensions.git_changes(window, buffer)
+        if changes then
+          return changes
+        end
       end
     ))
     -- ...
@@ -134,7 +137,10 @@ Outputs a git branch info if you are in a git project.
       "el_git_branch",
       "BufEnter",
       function(window, buffer)
-        return extensions.git_branch(window, buffer)
+        local branch = extensions.git_branch(window, buffer)
+        if branch then
+          return branch
+        end
       end
     ))
    -- ...
