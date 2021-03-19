@@ -6,21 +6,21 @@ local sections = require('el.sections')
 
 local extensions = {}
 
-local git_changed = vim.regex([[\(\d\+\)\( file changed\)\@=]])
 local git_insertions = vim.regex([[\(\d\+\)\( insertions\)\@=]])
+local git_changed = vim.regex([[\(\d\+\)\( file changed\)\@=]])
 local git_deletions = vim.regex([[\(\d\+\)\( deletions\)\@=]])
 
 local parse_shortstat_output = function(s)
   local result = {}
 
-  local changed = {git_changed:match_str(s)}
-  if not vim.tbl_isempty(changed) then
-    table.insert(result, string.format('~%s', string.sub(s, changed[1] + 1, changed[2])))
-  end
-
   local insert = {git_insertions:match_str(s)}
   if not vim.tbl_isempty(insert) then
     table.insert(result, string.format('+%s', string.sub(s, insert[1] + 1, insert[2])))
+  end
+
+  local changed = {git_changed:match_str(s)}
+  if not vim.tbl_isempty(changed) then
+    table.insert(result, string.format('~%s', string.sub(s, changed[1] + 1, changed[2])))
   end
 
   local delete = {git_deletions:match_str(s)}
