@@ -155,7 +155,7 @@ builtin.virtual_column_number = '%v'
 builtin.virtual_column_number_long = 'V'
 
 --   p N   Percentage through file in lines as in |CTRL-G|.
-builtin.percentage_through_file = '%p'
+builtin.percentage_through_file = '%3p'
 
 --   P S   Percentage through file of displayed window.  This is like the
 --         percentage described for 'ruler'.  Always 3 in length, unless
