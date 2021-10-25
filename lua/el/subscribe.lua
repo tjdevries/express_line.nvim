@@ -66,7 +66,7 @@ subscribe.autocmd = function(identifier, name, pattern, callback)
     [[autocmd %s %s :lua require("el.subscribe")._process_callback(%s)]]<
     name,
     pattern,
-    table.getn(_current_callbacks)
+    #_current_callbacks
   ))
 end
 

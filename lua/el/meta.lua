@@ -1,5 +1,3 @@
-package.loaded['el.meta'] = nil
-
 -- General Idea:
 --
 -- Buffer

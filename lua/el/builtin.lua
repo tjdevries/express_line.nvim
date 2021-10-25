@@ -43,9 +43,13 @@ builtin.tail_file = function(_, buffer)
   return vim.fn.fnamemodify(buffer.name, ':t')
 end
 
-builtin.responsive_file = function(shortened_transition, tail_transition)
+builtin.responsive_file = function(shortened_transition, tail_transition, relative)
   if tail_transition == nil then
     tail_transition = 0
+  end
+
+  if relative == nil then
+    relative = true
   end
 
   return function(window, buffer)
@@ -54,7 +58,7 @@ builtin.responsive_file = function(shortened_transition, tail_transition)
     elseif window.width < shortened_transition then
       return builtin.shortened_file(window, buffer)
     else
-      return builtin.file(window, buffer)
+      return relative and builtin.file_relative(window, buffer) or builtin.file(window, buffer)
     end
   end
 end
