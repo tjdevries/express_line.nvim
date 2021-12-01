@@ -1,31 +1,31 @@
-local Job = require('plenary.job')
+local Job = require "plenary.job"
 
-local modes = require('el.data').modes
-local mode_highlights = require('el.data').mode_highlights
-local sections = require('el.sections')
+local modes = require("el.data").modes
+local mode_highlights = require("el.data").mode_highlights
+local sections = require "el.sections"
 
 local extensions = {}
 
-local git_insertions = vim.regex([[\(\d\+\)\( insertions\)\@=]])
-local git_changed = vim.regex([[\(\d\+\)\( file changed\)\@=]])
-local git_deletions = vim.regex([[\(\d\+\)\( deletions\)\@=]])
+local git_insertions = vim.regex [[\(\d\+\)\( insertions\)\@=]]
+local git_changed = vim.regex [[\(\d\+\)\( file changed\)\@=]]
+local git_deletions = vim.regex [[\(\d\+\)\( deletions\)\@=]]
 
 local parse_shortstat_output = function(s)
   local result = {}
 
-  local insert = {git_insertions:match_str(s)}
+  local insert = { git_insertions:match_str(s) }
   if not vim.tbl_isempty(insert) then
-    table.insert(result, string.format('+%s', string.sub(s, insert[1] + 1, insert[2])))
+    table.insert(result, string.format("+%s", string.sub(s, insert[1] + 1, insert[2])))
   end
 
-  local changed = {git_changed:match_str(s)}
+  local changed = { git_changed:match_str(s) }
   if not vim.tbl_isempty(changed) then
-    table.insert(result, string.format('~%s', string.sub(s, changed[1] + 1, changed[2])))
+    table.insert(result, string.format("~%s", string.sub(s, changed[1] + 1, changed[2])))
   end
 
-  local delete = {git_deletions:match_str(s)}
+  local delete = { git_deletions:match_str(s) }
   if not vim.tbl_isempty(delete) then
-    table.insert(result, string.format('-%s', string.sub(s, delete[1] + 1, delete[2])))
+    table.insert(result, string.format("-%s", string.sub(s, delete[1] + 1, delete[2])))
   end
 
   if vim.tbl_isempty(result) then
@@ -36,8 +36,10 @@ local parse_shortstat_output = function(s)
 end
 
 extensions.git_changes = function(_, buffer)
-  if vim.api.nvim_buf_get_option(buffer.bufnr, 'bufhidden') ~= ""
-      or vim.api.nvim_buf_get_option(buffer.bufnr, 'buftype') == 'nofile' then
+  if
+    vim.api.nvim_buf_get_option(buffer.bufnr, "bufhidden") ~= ""
+    or vim.api.nvim_buf_get_option(buffer.bufnr, "buftype") == "nofile"
+  then
     return
   end
 
@@ -45,11 +47,11 @@ extensions.git_changes = function(_, buffer)
     return
   end
 
-  local j = Job:new({
+  local j = Job:new {
     command = "git",
-    args = {"diff", "--shortstat", buffer.name},
+    args = { "diff", "--shortstat", buffer.name },
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),
-  })
+  }
 
   local ok, result = pcall(function()
     return parse_shortstat_output(vim.trim(j:sync()[1]))
@@ -60,13 +62,12 @@ extensions.git_changes = function(_, buffer)
   end
 end
 
-
 extensions.git_branch = function(_, buffer)
-  local j = Job:new({
+  local j = Job:new {
     command = "git",
-    args = {"branch", "--show-current"},
+    args = { "branch", "--show-current" },
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),
-  })
+  }
 
   local ok, result = pcall(function()
     return vim.trim(j:sync()[1])
@@ -76,8 +77,6 @@ extensions.git_branch = function(_, buffer)
     return result
   end
 end
-
-
 
 local mode_dispatch = setmetatable({}, {
   __index = function(parent, format_string)
@@ -91,27 +90,23 @@ local mode_dispatch = setmetatable({}, {
         local highlighter = sections.gen_one_highlight(contents)
 
         local val = function(window, buffer)
-          return highlighter(
-            window,
-            buffer,
-            (window.is_active and higroup) or inactive_higroup
-          )
+          return highlighter(window, buffer, (window.is_active and higroup) or inactive_higroup)
         end
 
         rawset(child, k, val)
         return val
-      end
+      end,
     })
 
     rawset(parent, format_string, dispatcher)
     return dispatcher
-  end
+  end,
 })
 
 extensions.gen_mode = function(opts)
   opts = opts or {}
 
-  local format_string = opts.format_string or '[%s]'
+  local format_string = opts.format_string or "[%s]"
 
   return function(window, buffer)
     local mode = vim.api.nvim_get_mode().mode
@@ -123,22 +118,16 @@ extensions.mode = extensions.gen_mode()
 
 extensions.file_icon = function(_, buffer)
   local ok, icon = pcall(function()
-    return require('nvim-web-devicons').get_icon(
-      buffer.name,
-      buffer.extension,
-      {default = true}
-    )
+    return require("nvim-web-devicons").get_icon(buffer.name, buffer.extension, { default = true })
   end)
-  return ok and icon or ''
+  return ok and icon or ""
 end
 
 extensions.git_icon = function(_, buffer)
   local ok, icon = pcall(function()
-    return require('nvim-web-devicons').get_icon(
-      '.gitattributes'
-    )
+    return require("nvim-web-devicons").get_icon ".gitattributes"
   end)
-  return ok and icon or ''
+  return ok and icon or ""
 end
 
 return extensions

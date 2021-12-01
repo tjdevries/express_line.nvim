@@ -1,0 +1,312 @@
+================================================================================
+                                                                            *el*
+
+el (short for `express_line`) is a Lua statusline that I have been exploring
+making for awhile. Somewhat recently, I have decided to try and make this
+plugin a bit better. I hope you enjoy it.
+
+- tjdevries
+
+General Information
+
+Types of items:
+0. string
+1. function that returns a string
+    - built-in statusline items
+    - literal strings to display
+2. function that returns a function
+    - will be called every time (so should be somewhat fast)
+3. Returns a coroutine
+    - calls something that might take short amount of time.
+4. Returns a variable reference
+    - gets updated via timer / autocmds / other
+    - for example, running git status and saving the result to a var
+
+I'm targeting to have the following be true.
+
+Anytime you see a function with `make_` at the beginning of it's name, you can
+expect that function to create a function that returns an item.
+
+In other words, you always need to pass in the result of a `make_` function,
+not the `make_` function itself to the generator. Examples include things like
+|el.diagnostic.make_buffer|, which creates a function that returns an item.
+
+
+el.Item                                                              *el.Item*
+
+
+
+el.setup({opts})                                                  *el.setup()*
+    Default setup function
+
+
+    Parameters: ~
+        {opts} (table)  el configuration table. Use key `generator` to pass a
+                        new statusline generator
+
+
+
+================================================================================
+builtin.file()                                                *builtin.file()*
+      f S   Path to the file in the buffer, as typed or relative to current
+            directory.
+
+
+builtin.file_relative()                              *builtin.file_relative()*
+    relative file
+
+
+
+builtin.full_file()                                      *builtin.full_file()*
+      F S   Full path to the file in the buffer.
+
+
+builtin.shortened_file()                            *builtin.shortened_file()*
+    Shortened file name, via |pathshorten|
+
+
+
+builtin.tail_file()                                      *builtin.tail_file()*
+    Tail of the file name
+
+
+
+builtin.tail()                                                *builtin.tail()*
+    t S File name (tail) of file in the buffer.
+
+
+
+builtin.modified()                                        *builtin.modified()*
+    m F Modified flag, text is "[+]"; "[-]" if 'modifiable' is off.
+
+
+
+builtin.modified_list()                              *builtin.modified_list()*
+    M F Modified flag, text is ",+" or ",-".
+
+
+
+builtin.readonly()                                        *builtin.readonly()*
+    r F Readonly flag, text is "[RO]".
+
+
+
+builtin.readonly_flag()                              *builtin.readonly_flag()*
+    r F Readonly flag, text is "[RO]".
+
+
+
+builtin.readonly_list()                              *builtin.readonly_list()*
+    R F Readonly flag, text is ",RO".
+
+
+
+builtin.help()                                                *builtin.help()*
+    h F Help buffer flag, text is "[help]".
+
+
+
+builtin.help_flag()                                      *builtin.help_flag()*
+    h F Help buffer flag, text is "[help]".
+
+
+
+builtin.help_list()                                      *builtin.help_list()*
+    H F Help buffer flag, text is ",HLP".
+
+
+
+builtin.preview()                                          *builtin.preview()*
+    w F Preview window flag, text is "[Preview]".
+
+
+
+builtin.preview_flag()                                *builtin.preview_flag()*
+    w F Preview window flag, text is "[Preview]".
+
+
+
+builtin.preview_list()                                *builtin.preview_list()*
+    W F Preview window flag, text is ",PRV".
+
+
+
+builtin.filetype()                                        *builtin.filetype()*
+    y F Type of file in the buffer, e.g., "[vim]". See 'filetype'.
+
+
+
+builtin.filetype_flag()                              *builtin.filetype_flag()*
+    y F Type of file in the buffer, e.g., "[vim]". See 'filetype'.
+
+
+
+builtin.filetype_list()                              *builtin.filetype_list()*
+    Y F Type of file in the buffer, e.g., ",VIM". See 'filetype'.
+
+
+
+builtin.quickfix()                                        *builtin.quickfix()*
+    q S "[Quickfix List]", "[Location List]" or empty.
+
+
+
+builtin.quickfix_flag()                              *builtin.quickfix_flag()*
+    q S "[Quickfix List]", "[Location List]" or empty.
+
+
+
+builtin.locationlist()                                *builtin.locationlist()*
+    q S "[Quickfix List]", "[Location List]" or empty.
+
+
+
+builtin.locationlist_flag()                      *builtin.locationlist_flag()*
+    q S "[Quickfix List]", "[Location List]" or empty.
+
+
+
+builtin.keymap()                                            *builtin.keymap()*
+    k S Value of "b:keymap_name" or 'keymap' when |:lmap| mappings are being
+    used: "<keymap>"
+
+
+
+builtin.bufnr()                                              *builtin.bufnr()*
+    n N Buffer number.
+
+
+
+builtin.buffer_number()                              *builtin.buffer_number()*
+    n N Buffer number.
+
+
+
+builtin.character()                                      *builtin.character()*
+    b N Value of character under cursor.
+
+
+
+builtin.character_decimal()                      *builtin.character_decimal()*
+    b N Value of character under cursor.
+
+
+
+builtin.character_hex()                              *builtin.character_hex()*
+    B N As above, in hexadecimal.
+
+
+
+builtin.byte_number()                                  *builtin.byte_number()*
+      o N   Byte number in file of byte under cursor, first byte is 1.
+            Mnemonic: Offset from start of file (with one added)
+
+
+builtin.byte_number_hex()                          *builtin.byte_number_hex()*
+    O N As above, in hexadecimal.
+
+
+
+builtin.printer_page()                                *builtin.printer_page()*
+    N N Printer page number. (Only works in the 'printheader' option.)
+
+
+
+builtin.line()                                                *builtin.line()*
+    l N Line number.
+
+
+
+builtin.line_number()                                  *builtin.line_number()*
+    l N Line number.
+
+
+
+builtin.line_with_width()                          *builtin.line_with_width()*
+    TODO: Document
+
+
+
+builtin.number_of_lines()                          *builtin.number_of_lines()*
+    L N Number of lines in buffer.
+
+
+
+builtin.column()                                            *builtin.column()*
+    c N Column number.
+
+
+
+builtin.column_number()                              *builtin.column_number()*
+    c N Column number.
+
+
+
+builtin.column_with_width()                      *builtin.column_with_width()*
+    TODO: Document
+
+
+
+builtin.virtual_column()                            *builtin.virtual_column()*
+    v N Virtual column number.
+
+
+
+builtin.virtual_column_number()              *builtin.virtual_column_number()*
+    v N Virtual column number.
+
+
+
+builtin.virtual_column_number_long()    *builtin.virtual_column_number_long()*
+    V N Virtual column number as -{num}. Not displayed if equal to 'c'. TODO:
+    This isn't a good name.
+
+
+
+builtin.percentage_through_file()          *builtin.percentage_through_file()*
+    p N Percentage through file in lines as in |CTRL-G|.
+
+
+
+builtin.percentage_through_window()      *builtin.percentage_through_window()*
+      P S   Percentage through file of displayed window.  This is like the
+            percentage described for 'ruler'.  Always 3 in length, unless
+            translated.
+
+
+builtin.argument_list_status()                *builtin.argument_list_status()*
+      a S   Argument list status as in default title.  ({current} of {max})
+            Empty if the argument file count is zero or one.
+
+
+builtin.make_responsive_file({shortened_transition}, {tail_transition}, {relative}) *builtin.make_responsive_file()*
+    A responsive file that is useful for optionally shortening a filepath
+
+
+    Parameters: ~
+        {shortened_transition} (number)   When to transition to shortened path
+        {tail_transition}      (number)   When to transition to tail of path
+        {relative}             (boolean)  Whether to have the path be relative
+                                          to cwd or not, default true
+
+    Return: ~
+        el.Item: Must be called to return an item
+
+
+
+================================================================================
+                                                                 *el.diagnostic*
+
+M.make_buffer({formatter})                                   *M.make_buffer()*
+    An item generator, used to create an item that shows diagnostic information
+    for the current buffer
+
+
+    Parameters: ~
+        {formatter} (function)  Optional, function(window, buffer, counts) ->
+                                string. Counts keys: ["errors", "warnings",
+                                "infos", "hints"]
+
+
+
+ vim:tw=78:ts=8:ft=help:norl:
