@@ -1,12 +1,13 @@
 -- vim.diagnostic wrappers for el
 
 ---@tag el.diagnostic
+---@config { module = 'el.diagnostic' }
 
 local severity = vim.diagnostic.severity
 
 local subscribe = require "el.subscribe"
 
-local M = {}
+local diagnostic = {}
 
 local get_counts = function(diags)
   local errors, warnings, infos, hints = 0, 0, 0, 0
@@ -37,7 +38,7 @@ end
 --- An item generator, used to create an item that shows diagnostic information
 --- for the current buffer
 ---@param formatter function: Optional, function(window, buffer, counts) -> string. Counts keys: ["errors", "warnings", "infos", "hints"]
-M.make_buffer = function(formatter)
+diagnostic.make_buffer = function(formatter)
   if not formatter then
     formatter = function(_, _, counts)
       local items = {}
@@ -66,4 +67,4 @@ M.make_buffer = function(formatter)
   end)
 end
 
-return M
+return diagnostic

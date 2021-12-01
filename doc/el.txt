@@ -297,7 +297,7 @@ builtin.make_responsive_file({shortened_transition}, {tail_transition}, {relativ
 ================================================================================
                                                                  *el.diagnostic*
 
-M.make_buffer({formatter})                                   *M.make_buffer()*
+diagnostic.make_buffer({formatter})              *el.diagnostic.make_buffer()*
     An item generator, used to create an item that shows diagnostic information
     for the current buffer
 
