@@ -57,9 +57,11 @@ local generator = function()
     local extensions = require('el.extensions')
     table.insert(el_segments, extensions.mode) -- mode returns the current mode.
 
-    -- Option 3, returns a function that takes in a Window and a Buffer. See |:help el.Window| and |:help el.Buffer|
+    -- Option 3, returns a function that takes in a Window and a Buffer.
+    --  See |:help el.Window| and |:help el.Buffer|
     --
-    -- With this option, you don't have to worry about escaping / calling the function in the correct way to get the current buffer and window.
+    --  With this option, you don't have to worry about escaping / calling
+    --  the function in the correct way to get the current buffer and window.
     local file_namer = function(_window, buffer)
       return buffer.name
     end
@@ -69,7 +71,9 @@ local generator = function()
     --  In lua, you can cooperatively multi-thread.
     --  You can use `coroutine.yield()` to yield execution to another coroutine.
     --
-    -- For example, in luvjob.nvim, there is `co_wait` which is a coroutine version of waiting for a job to complete. So you can start multiple jobs at once and wait for them to all be done.
+    --  For example, in luvjob.nvim, there is `co_wait` which is a coroutine
+    --  version of waiting for a job to complete. So you can start multiple
+    --  jobs at once and wait for them to all be done.
     table.insert(el_segments, extensions.git_changes)
 
     -- Option 5, there are several helper functions provided to asynchronously
