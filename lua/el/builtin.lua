@@ -1,4 +1,5 @@
 local builtin = {}
+local helper = require('el.helper')
 
 -- TODO: It's a bit annoying that we don't know the length of
 -- some of these items until "too late".
@@ -24,7 +25,7 @@ builtin.file_relative = function(_, buffer)
     return builtin.file(_, buffer)
   end
 
-  return vim.fn.bufname(buffer.bufnr)
+  return helper.path_relative(vim.api.nvim_buf_get_name(buffer.bufnr), vim.loop.cwd())
 end
 
 --- <pre>

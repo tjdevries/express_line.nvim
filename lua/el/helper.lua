@@ -119,4 +119,26 @@ end
 helper.async_win_setter = async_setter("win")
 helper.async_buf_setter = async_setter("buf")
 
+-- add trailing '/' to path if not already there
+local path_add_trailing = function(path)
+  if path:sub(-1) == '/' then
+    return path
+  end
+
+  return path..'/'
+end
+
+--  replace - and . characters with %- and %. for lua to match paths properly
+local path_to_matching_str = function(path)
+  return path:gsub('(%-)', '(%%-)'):gsub('(%.)', '(%%.)'):gsub('(%_)', '(%%_)')
+end
+
+
+-- returns path relative to relative_to
+-- or the unmodified path if path is not under relative_to
+helper.path_relative = function(path, relative_to)
+  local p, _ = path:gsub("^" .. path_to_matching_str(path_add_trailing(relative_to)), "")
+  return p
+end
+
 return helper
