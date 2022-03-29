@@ -130,6 +130,44 @@ Outputs a git shortstat output if you are in a git project.
     ))
     -- ...
 ```
+### Git individual changes
+```lua
+  -- Insertions
+  table.insert(segments,
+    sections.highlight(
+      "GitGutterAdd",
+        subscribe.buf_autocmd("el_git_ins", "BufWritePost", function(_, buffer)
+          local insert = extensions.git_inserstions(_, buffer)
+          if insert then
+            return " " .. insert .. space
+          end
+        end)
+    ))
+
+  -- Modifications
+  table.insert(segments,
+    sections.highlight(
+      "GitGutterChange",
+        subscribe.buf_autocmd("el_git_change", "BufWritePost", function(_, buffer)
+          local change = extensions.git_inserstions(_, buffer)
+          if change then
+           return " " .. change .. space 
+          end
+        end)
+    ))
+
+  -- Deletions
+  table.insert(segments,
+    sections.highlight(
+      "GitGutterDelete",
+        subscribe.buf_autocmd("el_git_delete", "BufWritePost", function(_, buffer)
+          local delete = extensions.git_inserstions(_, buffer)
+          if delete then
+            return " " .. delete 
+          end
+        end)
+    ))
+```
 ### Git branch
 
 Outputs a git branch info if you are in a git project.
