@@ -6,36 +6,34 @@ local sections = require "el.sections"
 
 local extensions = {}
 
-local git_insertions = vim.regex [[\(\d\+\)\( insertions\)\@=]]
+local git_insertions = vim.regex [[\(\d\+\)\( insertion\)\@=]]
 local git_changed = vim.regex [[\(\d\+\)\( file changed\)\@=]]
-local git_deletions = vim.regex [[\(\d\+\)\( deletions\)\@=]]
+local git_deletions = vim.regex [[\(\d\+\)\( deletion\)\@=]]
 
 local parse_shortstat_output = function(s)
   local result = {}
 
   local insert = { git_insertions:match_str(s) }
   if not vim.tbl_isempty(insert) then
-    table.insert(result, string.format("+%s", string.sub(s, insert[1] + 1, insert[2])))
+    table.insert(result, string.format("%s", string.sub(s, insert[1] + 1, insert[2])))
   end
 
   local changed = { git_changed:match_str(s) }
   if not vim.tbl_isempty(changed) then
-    table.insert(result, string.format("~%s", string.sub(s, changed[1] + 1, changed[2])))
+    table.insert(result, string.format("%s", string.sub(s, changed[1] + 1, changed[2])))
   end
 
   local delete = { git_deletions:match_str(s) }
   if not vim.tbl_isempty(delete) then
-    table.insert(result, string.format("-%s", string.sub(s, delete[1] + 1, delete[2])))
+    table.insert(result, string.format("%s", string.sub(s, delete[1] + 1, delete[2])))
   end
 
-  if vim.tbl_isempty(result) then
-    return nil
+  if not vim.tbl_isempty(result) then
+    return result
   end
-
-  return string.format("[%s]", table.concat(result, ", "))
 end
 
-extensions.git_changes = function(_, buffer)
+local get_changes = function(_, buffer)
   if
     vim.api.nvim_buf_get_option(buffer.bufnr, "bufhidden") ~= ""
     or vim.api.nvim_buf_get_option(buffer.bufnr, "buftype") == "nofile"
@@ -53,12 +51,53 @@ extensions.git_changes = function(_, buffer)
     cwd = vim.fn.fnamemodify(buffer.name, ":h"),
   }
 
+  return vim.trim(j:sync()[1])
+end
+
+extensions.git_changes = function(_, buffer)
   local ok, result = pcall(function()
-    return parse_shortstat_output(vim.trim(j:sync()[1]))
+    return parse_shortstat_output(get_changes(_, buffer))
   end)
 
   if ok then
-    return result
+    if result then
+      return string.format("[+%s, ~%s, -%s]", result[1], result[2], result[3])
+    end
+  end
+end
+
+extensions.git_inserstions = function(_, buffer)
+  local ok, result = pcall(function()
+    return parse_shortstat_output(get_changes(_, buffer))
+  end)
+
+  if ok then
+    if result[1] then
+      return result[1]
+    end
+  end
+end
+
+extensions.git_modifications = function(_, buffer)
+  local ok, result = pcall(function()
+    return parse_shortstat_output(get_changes(_, buffer))
+  end)
+  if ok then
+    if result[2] then
+      return result[2]
+    end
+  end
+end
+
+extensions.git_deletions = function(_, buffer)
+  local ok, result = pcall(function()
+    return parse_shortstat_output(get_changes(_, buffer))
+  end)
+
+  if ok then
+    if result[3] then
+      return result[3]
+    end
   end
 end
 
@@ -123,7 +162,7 @@ extensions.file_icon = function(_, buffer)
   return ok and icon or ""
 end
 
-extensions.git_icon = function(_, buffer)
+extensions.git_icon = function(_, _)
   local ok, icon = pcall(function()
     return require("nvim-web-devicons").get_icon ".gitattributes"
   end)
